@@ -396,6 +396,7 @@
       <button class="theme-toggle" id="cloud-sync-btn" title="סנכרון ענן">☁️</button>
       <button class="theme-toggle" id="backup-export-btn" title="ייצוא גיבוי">💾</button>
       <button class="theme-toggle" id="backup-import-btn" title="ייבוא גיבוי">📂</button>
+      <button class="theme-toggle" id="logout-btn" title="התנתקות" style="display:none;">🚪</button>
       <input type="file" id="backup-file-input" accept="application/json" style="display:none;">
     </div>
   </div>
@@ -1049,12 +1050,24 @@
 
   function updateAuthUI() {
     const overlay = $("auth-overlay");
+    const logoutBtn = $("logout-btn");
     if (supabaseClient && !currentUser) {
       overlay.style.display = "flex";
+      logoutBtn.style.display = "none";
     } else {
       overlay.style.display = "none";
+      logoutBtn.style.display = (supabaseClient && currentUser) ? "inline-flex" : "none";
     }
   }
+
+  $("logout-btn").addEventListener("click", async () => {
+    if (!supabaseClient) return;
+    if (!confirm("להתנתק? תצטרך להזין אימייל וסיסמה שוב כדי להיכנס.")) return;
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    updateAuthUI();
+    showToast("התנתקת בהצלחה", "success");
+  });
 
   let authMode = "login";
   $("auth-tab-login").addEventListener("click", () => { authMode = "login"; $("auth-tab-login").classList.add("active"); $("auth-tab-signup").classList.remove("active"); $("auth-submit-btn").textContent = "התחבר"; $("auth-error").style.display = "none"; });
