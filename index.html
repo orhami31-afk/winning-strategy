@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="אסטרטגיה מנצחת">
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIteQ16HXmNeo15jXkteZ15Qg157XoNem15fXqiIsICJzaG9ydF9uYW1lIjogIteQ16HXmNeo15jXkteZ15Qg157XoNem15fXqiIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjMEEwRDEyIiwgInRoZW1lX2NvbG9yIjogIiMwQTBEMTIiLCAiaWNvbnMiOiBbXX0=">
 <title>אסטרטגיה מנצחת</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -78,6 +79,25 @@
   /* ---------- age tag ---------- */
   .age-tag { font-size: 10.5px; padding: 2px 8px; border-radius: 20px; background: var(--surface-2); color: var(--text-muted); }
   .age-tag.overdue { background: var(--short-dim); color: var(--short); }
+
+  /* ---------- auth overlay ---------- */
+  .auth-overlay {
+    position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(227,177,94,.08), transparent),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(108,147,245,.09), transparent),
+      var(--bg);
+    padding: 20px;
+  }
+  .auth-box { width: 100%; max-width: 380px; padding: 28px 24px; }
+  .auth-box h1 { font-family:'Frank Ruhl Libre',serif; font-size:24px; text-align:center; margin:0 0 6px; }
+  .auth-box h1 span { color: var(--gold); }
+  .auth-box .sub { text-align:center; color:var(--text-faint); font-size:12.5px; margin-bottom:22px; }
+  .auth-tabs { display:flex; gap:6px; margin-bottom:18px; background:var(--surface-2); border-radius:10px; padding:4px; }
+  .auth-tabs button { flex:1; background:none; border:none; padding:8px; border-radius:8px; color:var(--text-muted); font-family:'Assistant',sans-serif; font-weight:600; font-size:13px; cursor:pointer; }
+  .auth-tabs button.active { background: var(--gold); color:#14100A; }
+  .auth-error { color: var(--short); font-size:12.5px; margin-top:10px; display:none; }
+  .auth-skip { text-align:center; margin-top:16px; font-size:12px; color:var(--text-faint); cursor:pointer; text-decoration:underline; }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -350,12 +370,30 @@
 
 <div class="toast-stack" id="toast-stack"></div>
 
+<!-- ============ AUTH OVERLAY (shown only when cloud sync is configured) ============ -->
+<div class="auth-overlay" id="auth-overlay" style="display:none;">
+  <div class="auth-box glass">
+    <h1>אסטרטגיה <span>מנצחת</span></h1>
+    <div class="sub">התחברות פרטית - הנתונים שלך שייכים רק לך</div>
+    <div class="auth-tabs">
+      <button class="active" id="auth-tab-login">התחברות</button>
+      <button id="auth-tab-signup">הרשמה</button>
+    </div>
+    <label>אימייל</label><input type="text" id="auth-email" placeholder="you@example.com">
+    <label>סיסמה</label><input type="password" id="auth-password" placeholder="לפחות 6 תווים">
+    <button class="btn" id="auth-submit-btn">התחבר</button>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-skip" id="auth-skip-btn">המשך בלי סנכרון ענן (נתונים במכשיר זה בלבד)</div>
+  </div>
+</div>
+
 <header>
   <div class="brand">
     <h1>אסטרטגיה <span>מנצחת</span></h1>
     <div style="display:flex;align-items:center;gap:8px;">
       <div class="sub" id="clock-label">—</div>
       <button class="theme-toggle" id="theme-toggle-btn" title="החלף מצב תצוגה">🌙</button>
+      <button class="theme-toggle" id="cloud-sync-btn" title="סנכרון ענן">☁️</button>
       <button class="theme-toggle" id="backup-export-btn" title="ייצוא גיבוי">💾</button>
       <button class="theme-toggle" id="backup-import-btn" title="ייבוא גיבוי">📂</button>
       <input type="file" id="backup-file-input" accept="application/json" style="display:none;">
@@ -372,6 +410,26 @@
     <button class="tab-btn" data-view="longterm">טווח ארוך</button>
   </nav>
 </header>
+
+<!-- cloud sync settings modal -->
+<div class="modal-backdrop" id="modal-cloud-sync">
+  <div class="modal glass">
+    <h3>☁️ סנכרון ענן (Supabase)</h3>
+    <p class="hint">
+      חבר פרויקט Supabase חינמי כדי שהנתונים שלך יסתנכרנו בין מכשירים, עם התחברות אמיתית
+      והרשאות פרטיות. תהליך ההקמה המלא בהוראות שאשלח לך בצ'אט. אחרי שיש לך Project URL
+      ו-Anon Key מ-Supabase, הדבק אותם כאן.
+    </p>
+    <label>Project URL</label><input type="text" id="sb-url-input" placeholder="https://xxxx.supabase.co">
+    <label>Anon Public Key</label><input type="text" id="sb-key-input" placeholder="eyJhbGciOi...">
+    <div id="cloud-sync-status" style="font-size:12.5px;margin-top:10px;color:var(--text-muted);"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cloud-sync-cancel" style="flex:1">סגור</button>
+      <button class="btn" id="cloud-sync-save" style="flex:1;margin-top:0">שמור והתחבר</button>
+    </div>
+    <button class="btn danger-outline" id="cloud-sync-disconnect" style="width:100%;margin-top:10px;display:none;">התנתק מסנכרון ענן</button>
+  </div>
+</div>
 
 <main>
 
@@ -898,13 +956,23 @@
   let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
 
   // ---------------- storage helpers ----------------
-  // Works two ways: inside Claude.ai artifacts (window.storage) OR as a standalone
-  // hosted site via localStorage (per-device only, until the Supabase upgrade in step 3).
+  // Three tiers, in priority order:
+  // 1. Supabase (when connected + logged in) - real per-user cloud storage with RLS.
+  // 2. window.storage - when running inside a Claude.ai artifact preview.
+  // 3. localStorage - standalone hosting, not yet connected to Supabase (per-device only).
   const STORAGE_PREFIX = "winning_strategy:";
   const hasClaudeStorage = (typeof window !== "undefined") && !!window.storage && typeof window.storage.get === "function";
 
+  let supabaseClient = null;
+  let currentUser = null;
+
   async function storeGet(key, fallback) {
     try {
+      if (supabaseClient && currentUser) {
+        const { data, error } = await supabaseClient.from("app_data").select("value").eq("user_id", currentUser.id).eq("key", key).maybeSingle();
+        if (error) throw error;
+        return data ? data.value : fallback;
+      }
       if (hasClaudeStorage) {
         const r = await window.storage.get(key, false);
         return r && r.value ? JSON.parse(r.value) : fallback;
@@ -915,6 +983,14 @@
   }
   async function storeSet(key, value) {
     try {
+      if (supabaseClient && currentUser) {
+        const { error } = await supabaseClient.from("app_data").upsert(
+          { user_id: currentUser.id, key, value, updated_at: new Date().toISOString() },
+          { onConflict: "user_id,key" }
+        );
+        if (error) throw error;
+        return;
+      }
       if (hasClaudeStorage) {
         await window.storage.set(key, JSON.stringify(value), false);
       } else {
@@ -933,6 +1009,115 @@
     if (!idx.includes(d)) { idx.push(d); idx.sort().reverse(); await saveDailyIndex(idx); }
   }
   async function saveDailyDayInPlace(d, records) { await storeSet("daily:" + d, records); }
+
+  // ---------------- Supabase cloud sync + auth ----------------
+  const SB_URL_KEY = "sb_project_url", SB_ANON_KEY = "sb_anon_key";
+
+  function getSbConfig() {
+    return { url: localStorage.getItem(SB_URL_KEY), key: localStorage.getItem(SB_ANON_KEY) };
+  }
+  function saveSbConfig(url, key) {
+    localStorage.setItem(SB_URL_KEY, url);
+    localStorage.setItem(SB_ANON_KEY, key);
+  }
+  function clearSbConfig() {
+    localStorage.removeItem(SB_URL_KEY);
+    localStorage.removeItem(SB_ANON_KEY);
+  }
+
+  async function initSupabaseAndAuth() {
+    const { url, key } = getSbConfig();
+    if (!url || !key) return; // no cloud sync configured - app works locally, no login needed
+    if (typeof window.supabase === "undefined") {
+      showToast("לא הצלחתי לטעון את ספריית Supabase (בעיית רשת?) - עובד במצב מקומי", "error");
+      return;
+    }
+    try {
+      supabaseClient = window.supabase.createClient(url, key);
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      currentUser = session ? session.user : null;
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        currentUser = session ? session.user : null;
+        updateAuthUI();
+      });
+    } catch (e) {
+      console.error("Supabase init failed", e);
+      showToast("שגיאה בחיבור ל-Supabase - בדוק את ה-URL והמפתח", "error");
+      supabaseClient = null;
+    }
+  }
+
+  function updateAuthUI() {
+    const overlay = $("auth-overlay");
+    if (supabaseClient && !currentUser) {
+      overlay.style.display = "flex";
+    } else {
+      overlay.style.display = "none";
+    }
+  }
+
+  let authMode = "login";
+  $("auth-tab-login").addEventListener("click", () => { authMode = "login"; $("auth-tab-login").classList.add("active"); $("auth-tab-signup").classList.remove("active"); $("auth-submit-btn").textContent = "התחבר"; $("auth-error").style.display = "none"; });
+  $("auth-tab-signup").addEventListener("click", () => { authMode = "signup"; $("auth-tab-signup").classList.add("active"); $("auth-tab-login").classList.remove("active"); $("auth-submit-btn").textContent = "הרשם"; $("auth-error").style.display = "none"; });
+
+  $("auth-submit-btn").addEventListener("click", async () => {
+    const email = $("auth-email").value.trim();
+    const password = $("auth-password").value;
+    const errBox = $("auth-error");
+    errBox.style.display = "none";
+    if (!email || password.length < 6) { errBox.textContent = "נא להזין אימייל וסיסמה (6+ תווים)"; errBox.style.display = "block"; return; }
+    if (!supabaseClient) { errBox.textContent = "סנכרון ענן לא מחובר"; errBox.style.display = "block"; return; }
+    try {
+      let result;
+      if (authMode === "signup") {
+        result = await supabaseClient.auth.signUp({ email, password });
+      } else {
+        result = await supabaseClient.auth.signInWithPassword({ email, password });
+      }
+      if (result.error) { errBox.textContent = result.error.message; errBox.style.display = "block"; return; }
+      if (authMode === "signup" && result.data.user && !result.data.session) {
+        errBox.style.display = "none";
+        showToast("נרשמת! בדוק את המייל שלך לאישור החשבון, ואז התחבר", "success");
+        authMode = "login"; $("auth-tab-login").click();
+        return;
+      }
+      currentUser = result.data.user;
+      updateAuthUI();
+      TRADES = await loadTrades();
+      await renderDashboard();
+      showToast("התחברת בהצלחה", "success");
+    } catch (e) {
+      errBox.textContent = "שגיאה: " + (e.message || e);
+      errBox.style.display = "block";
+    }
+  });
+  $("auth-skip-btn").addEventListener("click", () => {
+    if (!confirm("בלי סנכרון ענן, הנתונים יישמרו רק במכשיר הזה. להמשיך ככה?")) return;
+    $("auth-overlay").style.display = "none";
+  });
+
+  // cloud sync settings modal
+  $("cloud-sync-btn").addEventListener("click", () => {
+    const { url, key } = getSbConfig();
+    $("sb-url-input").value = url || "";
+    $("sb-key-input").value = key || "";
+    $("cloud-sync-status").textContent = supabaseClient && currentUser ? `מחובר כ-${currentUser.email}` : (url ? "מוגדר אך לא מחובר" : "לא מוגדר - הנתונים נשמרים מקומית בלבד");
+    $("cloud-sync-disconnect").style.display = url ? "block" : "none";
+    $("modal-cloud-sync").classList.add("active");
+  });
+  $("cloud-sync-cancel").addEventListener("click", () => $("modal-cloud-sync").classList.remove("active"));
+  $("cloud-sync-save").addEventListener("click", async () => {
+    const url = $("sb-url-input").value.trim(), key = $("sb-key-input").value.trim();
+    if (!url || !key) { showToast("נא למלא URL ומפתח", "error"); return; }
+    saveSbConfig(url, key);
+    showToast("נשמר - טוען מחדש...", "success");
+    setTimeout(() => location.reload(), 1000);
+  });
+  $("cloud-sync-disconnect").addEventListener("click", async () => {
+    if (!confirm("להתנתק מסנכרון הענן? האפליקציה תחזור לעבוד עם נתונים מקומיים בלבד במכשיר הזה.")) return;
+    clearSbConfig();
+    location.reload();
+  });
 
   // ---------------- tabs ----------------
   document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -2213,8 +2398,13 @@
   // ================= INIT =================
   (async function init() {
     await initTheme();
-    TRADES = await loadTrades();
-    await renderDashboard();
+    await initSupabaseAndAuth();
+    updateAuthUI();
+    if (!(supabaseClient && !currentUser)) {
+      // only load/render immediately if not blocked by the login overlay
+      TRADES = await loadTrades();
+      await renderDashboard();
+    }
   })();
 })();
 </script>
