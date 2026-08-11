@@ -76,6 +76,27 @@
   .banner { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--gold-dim); border: 1px solid rgba(227,177,94,.25); color: var(--gold); }
   .banner button { background: none; border: none; color: var(--text-faint); cursor: pointer; font-size: 15px; }
 
+  /* ---------- ticker tape ---------- */
+  .ticker-wrap {
+    overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--border);
+    background: var(--surface-solid); padding: 9px 0; position: relative;
+  }
+  .ticker-track {
+    display: inline-flex; align-items: center; animation: ticker-scroll 45s linear infinite;
+  }
+  .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+  @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; overflow-x: auto; } }
+  .ticker-item {
+    display: inline-flex; align-items: baseline; gap: 6px; padding: 0 22px;
+    border-left: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 12.5px;
+  }
+  .ticker-item .tk-name { color: var(--text-muted); }
+  .ticker-item .tk-price { color: var(--text); font-weight: 600; }
+  .ticker-item .tk-chg.pos { color: var(--long); }
+  .ticker-item .tk-chg.neg { color: var(--short); }
+  .ticker-loading { padding: 0 22px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-faint); }
+
   /* ---------- age tag ---------- */
   .age-tag { font-size: 10.5px; padding: 2px 8px; border-radius: 20px; background: var(--surface-2); color: var(--text-muted); }
   .age-tag.overdue { background: var(--short-dim); color: var(--short); }
@@ -154,14 +175,23 @@
   /* ---------- KPI cards ---------- */
   .kpi-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 16px; }
   @media (min-width: 680px) { .kpi-grid { grid-template-columns: repeat(4,1fr); } }
+  /* ---------- 3D depth background ---------- */
+  #bg-canvas { position: fixed; inset: 0; z-index: -1; opacity: .45; pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { #bg-canvas { display: none; } }
+
   .kpi {
     padding: 18px 16px; text-align: center; position: relative; overflow: hidden;
+    transition: transform .25s ease, box-shadow .25s ease;
   }
+  .kpi:hover { transform: perspective(700px) rotateX(2deg) translateY(-2px); }
   .kpi::before {
     content: ""; position: absolute; inset: 0; border-radius: var(--radius);
     background: radial-gradient(circle at 50% 0%, var(--glow-color, var(--accent-dim)), transparent 70%);
     opacity: .8; pointer-events: none;
+    animation: kpi-glow-pulse 4.5s ease-in-out infinite;
   }
+  @keyframes kpi-glow-pulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .kpi::before { animation: none; } }
   .kpi .l { font-size: 11px; color: var(--text-faint); position: relative; }
   .kpi .v { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; margin-top: 6px; position: relative; }
   .kpi .v.pos { color: var(--long); text-shadow: 0 0 20px var(--long-glow); }
@@ -169,17 +199,21 @@
   .kpi .v.gold { color: var(--gold); text-shadow: 0 0 20px var(--gold-glow); }
   .kpi .sub2 { font-size: 10.5px; color: var(--text-faint); margin-top: 3px; position: relative; }
 
-  .card { padding: 18px; margin-bottom: 14px; }
+  .card { padding: 18px; margin-bottom: 14px; transition: transform .25s ease, box-shadow .25s ease; }
+  .card:hover { transform: perspective(900px) rotateX(0.8deg) translateY(-2px); box-shadow: 0 14px 34px rgba(0,0,0,.35); }
+  @media (hover: none) { .card:hover, .kpi:hover { transform: none; } }
   .card h2 { font-family: 'Frank Ruhl Libre', serif; font-size: 17px; margin: 0 0 4px; font-weight: 700; }
   .card .hint { font-size: 12.5px; color: var(--text-faint); margin: 0 0 14px; line-height: 1.55; }
 
   /* ---------- form elements ---------- */
   label { display: block; font-size: 12.5px; color: var(--text-muted); margin: 12px 0 5px; font-weight: 600; }
   label:first-of-type { margin-top: 0; }
-  input[type=text], input[type=number], select, textarea {
+  input[type=text], input[type=number], input[type=date], select, textarea {
     width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
     border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14.5px; font-family: 'IBM Plex Mono', monospace;
   }
+  input[type=date] { color-scheme: dark; }
+  body[data-theme="light"] input[type=date] { color-scheme: light; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
@@ -216,7 +250,9 @@
   .empty-state .cta { color: var(--gold); font-weight: 600; margin-top: 8px; font-size: 12.5px; }
 
   /* ---------- signal / rec cards ---------- */
-  .rec-card { padding: 16px; margin-bottom: 12px; border-right: 3px solid var(--border); position: relative; }
+  .rec-card { padding: 16px; margin-bottom: 12px; border-right: 3px solid var(--border); position: relative; transition: transform .2s ease, box-shadow .2s ease; }
+  .rec-card:hover { transform: perspective(900px) rotateX(0.6deg) translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,.3); }
+  @media (hover: none) { .rec-card:hover { transform: none; } }
   .rec-card.long { border-right-color: var(--long); }
   .rec-card.short { border-right-color: var(--short); }
   .rec-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -368,6 +404,8 @@
 </head>
 <body>
 
+<canvas id="bg-canvas"></canvas>
+
 <div class="toast-stack" id="toast-stack"></div>
 
 <!-- ============ AUTH OVERLAY (shown only when cloud sync is configured) ============ -->
@@ -412,6 +450,12 @@
   </nav>
 </header>
 
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker-track">
+    <div class="ticker-loading">טוען נתוני שוק...</div>
+  </div>
+</div>
+
 <!-- cloud sync settings modal -->
 <div class="modal-backdrop" id="modal-cloud-sync">
   <div class="modal glass">
@@ -455,6 +499,10 @@
       <div class="kpi glass"><div class="l">Sortino (מפושט)</div><div class="v" id="kpi-sortino" style="--glow-color:var(--accent-dim)">—</div></div>
       <div class="kpi glass"><div class="l">רווח מהמלצות שנכנסו</div><div class="v" id="kpi-rec-pnl" style="--glow-color:var(--gold-dim)">—</div></div>
     </div>
+    <div class="kpi-grid">
+      <div class="kpi glass"><div class="l">חום תיק (סיכון פתוח כולל)</div><div class="v" id="kpi-heat" style="--glow-color:var(--short-dim)">—</div><div class="sub2" id="kpi-heat-sub"></div></div>
+    </div>
+    <div id="concentration-warning-slot"></div>
 
     <div class="card glass">
       <h2>עקומת הון</h2>
@@ -480,6 +528,21 @@
         <input type="text" id="auto-symbol" placeholder="AAPL" style="text-transform:uppercase;flex:1;">
         <select id="auto-direction" style="max-width:120px;"><option value="auto">אוטומטי</option><option value="long">לונג</option><option value="short">שורט</option></select>
       </div>
+      <label>סקטור להשוואת חוזק יחסי (אופציונלי)</label>
+      <select id="auto-sector-etf">
+        <option value="">ללא השוואה</option>
+        <option value="XLK">טכנולוגיה (XLK)</option>
+        <option value="XLF">פיננסים (XLF)</option>
+        <option value="XLV">בריאות (XLV)</option>
+        <option value="XLE">אנרגיה (XLE)</option>
+        <option value="XLY">צריכה מחזורית (XLY)</option>
+        <option value="XLP">צריכה בסיסית (XLP)</option>
+        <option value="XLI">תעשייה (XLI)</option>
+        <option value="XLU">שירותים ציבוריים (XLU)</option>
+        <option value="XLB">חומרי גלם (XLB)</option>
+        <option value="XLRE">נדל״ן (XLRE)</option>
+        <option value="XLC">תקשורת (XLC)</option>
+      </select>
       <button class="btn" id="btn-auto-analyze">נתח מניה</button>
       <div id="auto-analysis-result"></div>
       <div id="api-key-setup" style="display:none;margin-top:14px;padding:12px;border-radius:11px;background:var(--gold-dim);border:1px solid rgba(227,177,94,.25);font-size:12.5px;line-height:1.6;">
@@ -525,6 +588,38 @@
     </details>
     <div id="check-results"></div>
 
+    <div class="card glass">
+      <h2>📸 ניתוח תרשים מצילום מסך</h2>
+      <p class="hint">
+        העלה צילום מסך של גרף (מניה, זהב, כל נכס) - קבל ניתוח תבניות טכניות למה שנראה בתרשים
+        לטווח הקרוב (דקות-שעות). <b>זה ניתוח דפוסים חזותי בלבד</b> - לא חיזוי ודאי, ולא המלצת פעולה.
+      </p>
+      <label>סימול / הקשר (אופציונלי)</label>
+      <input type="text" id="chart-context" placeholder="למשל: AAPL, גרף 15 דקות">
+      <label>תמונת הגרף</label>
+      <input type="file" id="chart-image-input" accept="image/*">
+      <button class="btn" id="btn-analyze-chart">נתח תרשים</button>
+      <div id="chart-analysis-result"></div>
+    </div>
+
+    <div class="card glass">
+      <h2>🎯 סריקת מניות עם אחוז הצלחה גבוה</h2>
+      <p class="hint">
+        מריץ בקטסט על רשימת סימולים ומראה רק אלה שעברו את סף ההצלחה שתגדיר (למשל 80%),
+        <b>עם מספיק מקרים בעבר כדי שהמספר יהיה אמין</b> (מינימום 8). זו בדיקה לפי דרישה, לא ניטור
+        רציף - ורשימות ארוכות ייקחו כמה דקות בגלל מגבלת קצב ה-API החינמי.
+      </p>
+      <label>סימולים (מופרדים בפסיק)</label>
+      <textarea id="scan-symbols" rows="2" placeholder="AAPL, MSFT, NVDA, TSLA, AMD, ..."></textarea>
+      <div class="row2">
+        <div><label>סף אחוז הצלחה מינימלי</label><input type="number" id="scan-threshold" value="80" min="50" max="100"></div>
+        <div><label>כיוון</label><select id="scan-direction"><option value="long">לונג</option><option value="short">שורט</option><option value="both">שניהם</option></select></div>
+      </div>
+      <button class="btn" id="btn-run-scan">סרוק</button>
+      <div id="scan-progress" style="display:none;font-size:12px;color:var(--text-faint);margin-top:10px;"></div>
+      <div id="scan-results-list" style="margin-top:12px;"></div>
+    </div>
+
     <details class="rules glass">
       <summary>תזכורת חוקים — Gap &amp; Trend Breakout</summary>
       <div class="rules-grid">
@@ -561,8 +656,8 @@
     <div class="card glass">
       <h2>סינון לפי תאריכים</h2>
       <div class="date-filter">
-        <div><label>מ-תאריך</label><input type="text" id="hist-from" placeholder="YYYY-MM-DD"></div>
-        <div><label>עד-תאריך</label><input type="text" id="hist-to" placeholder="YYYY-MM-DD"></div>
+        <div><label>מ-תאריך</label><input type="date" id="hist-from"></div>
+        <div><label>עד-תאריך</label><input type="date" id="hist-to"></div>
         <button class="btn ghost" id="btn-hist-filter" style="height:41px">סנן</button>
         <button class="btn ghost" id="btn-hist-clear" style="height:41px">נקה</button>
       </div>
@@ -709,7 +804,7 @@
 <div class="glass qa-panel" id="qa-panel">
   <div class="qa-panel-head"><span>שאל את הנתונים שלך</span><button id="qa-close">✕</button></div>
   <div class="qa-messages" id="qa-messages"></div>
-  <div class="qa-hint">עונה רק מתוך העסקאות וההמלצות שלך - שום מידע מבחוץ.</div>
+  <div class="qa-hint">שאלות אישיות - רק מתוך הנתונים שלך. שאלות כלליות על מסחר - גם מידע כללי.</div>
   <div class="qa-input-row">
     <input type="text" id="qa-input" placeholder="למשל: מה אחוז ההצלחה שלי בלונגים?">
     <button class="btn blue" id="qa-send">↵</button>
@@ -721,7 +816,7 @@
   <div class="modal glass">
     <h3>סגירת עסקה</h3>
     <label>מחיר יציאה ($)</label><input type="number" id="close-price" step="0.01">
-    <label>תאריך יציאה</label><input type="text" id="close-date" placeholder="YYYY-MM-DD">
+    <label>תאריך יציאה</label><input type="date" id="close-date">
     <label>יצאת...</label>
     <div class="debrief-options">
       <button data-reason="plan" class="debrief-opt">✅ בדיוק לפי התוכנית</button>
@@ -746,8 +841,23 @@
     <label>סימול</label><input type="text" id="add-symbol" style="text-transform:uppercase">
     <div class="row2">
       <div><label>כיוון</label><select id="add-direction"><option value="long">לונג</option><option value="short">שורט</option></select></div>
-      <div><label>תאריך</label><input type="text" id="add-date" placeholder="YYYY-MM-DD"></div>
+      <div><label>תאריך</label><input type="date" id="add-date"></div>
     </div>
+    <label>סקטור (אופציונלי - לזיהוי ריכוזיות סיכון)</label>
+    <select id="add-sector">
+      <option value="">לא צוין</option>
+      <option value="טכנולוגיה">טכנולוגיה</option>
+      <option value="פיננסים">פיננסים</option>
+      <option value="בריאות">בריאות</option>
+      <option value="אנרגיה">אנרגיה</option>
+      <option value="צריכה מחזורית">צריכה מחזורית</option>
+      <option value="צריכה בסיסית">צריכה בסיסית</option>
+      <option value="תעשייה">תעשייה</option>
+      <option value="שירותים ציבוריים">שירותים ציבוריים</option>
+      <option value="חומרי גלם">חומרי גלם</option>
+      <option value="נדל״ן">נדל״ן</option>
+      <option value="תקשורת">תקשורת</option>
+    </select>
     <div id="add-quick-fields" style="display:none;">
       <label>רווח/הפסד סופי ($) — שלילי להפסד</label><input type="number" id="add-pnl" step="0.01" placeholder="לדוגמה: 250 או -120">
     </div>
@@ -778,7 +888,7 @@
       <div><label>מניות</label><input type="number" id="lt-add-shares" step="0.0001"></div>
       <div><label>מחיר קנייה ($)</label><input type="number" id="lt-add-cost" step="0.01"></div>
     </div>
-    <label>תאריך קנייה</label><input type="text" id="lt-add-date" placeholder="YYYY-MM-DD">
+    <label>תאריך קנייה</label><input type="date" id="lt-add-date">
     <label>הערות / תזה</label><textarea id="lt-add-notes" rows="2"></textarea>
     <div class="modal-actions">
       <button class="btn ghost" id="lt-add-cancel" style="flex:1">ביטול</button>
@@ -792,7 +902,7 @@
   <div class="modal glass">
     <h3>מכירת אחזקה</h3>
     <label>מחיר מכירה ($)</label><input type="number" id="lt-close-price" step="0.01">
-    <label>תאריך מכירה</label><input type="text" id="lt-close-date" placeholder="YYYY-MM-DD">
+    <label>תאריך מכירה</label><input type="date" id="lt-close-date">
     <div class="modal-actions">
       <button class="btn ghost" id="lt-close-cancel" style="flex:1">ביטול</button>
       <button class="btn" id="lt-close-confirm" style="flex:1;margin-top:0">שמור</button>
@@ -920,11 +1030,12 @@
   }
 
   function backtestSymbol(bars, direction, maxHoldDays=10, rr=2) {
-    if (bars.length < 80) return { winRate: null, sample: 0 };
+    if (bars.length < 80) return { winRate: null, sample: 0, byMonth: {} };
     const closes = bars.map(b=>b.close);
     const emaFast = ema(closes, 9), emaMed = ema(closes, 20), smaSlow = sma(closes, 50);
     const rsiArr = rsi(closes, 14), hist = macdHist(closes);
     let outcomes = [];
+    const byMonth = {}; // "01".."12" -> {wins, total}
     const start = 55, end = bars.length - 1;
     for (let i = start; i < end; i++) {
       const gapPct = (bars[i].open - closes[i-1]) / closes[i-1] * 100;
@@ -952,13 +1063,87 @@
         if (hitT) { won=true; break; }
         if (hitS) { won=false; break; }
       }
-      if (won !== null) outcomes.push(won);
+      if (won !== null) {
+        outcomes.push(won);
+        const monthKey = (bars[i].date || bars[i].time || "").slice(5,7) || "??";
+        if (!byMonth[monthKey]) byMonth[monthKey] = { wins:0, total:0 };
+        byMonth[monthKey].total++;
+        if (won) byMonth[monthKey].wins++;
+      }
     }
-    if (outcomes.length===0) return { winRate:null, sample:0 };
-    return { winRate: Math.round(100*outcomes.filter(Boolean).length/outcomes.length*10)/10, sample: outcomes.length };
+    if (outcomes.length===0) return { winRate:null, sample:0, byMonth: {} };
+    return { winRate: Math.round(100*outcomes.filter(Boolean).length/outcomes.length*10)/10, sample: outcomes.length, byMonth };
   }
 
+  const HEB_MONTH_NAMES = {"01":"ינו'","02":"פבר'","03":"מרץ","04":"אפר'","05":"מאי","06":"יונ'","07":"יול'","08":"אוג'","09":"ספט'","10":"אוק'","11":"נוב'","12":"דצמ'"};
+  function seasonalityHtml(byMonth) {
+    const entries = Object.entries(byMonth).filter(([m,d]) => d.total >= 2).sort((a,b)=>a[0].localeCompare(b[0]));
+    if (entries.length === 0) return "";
+    const chips = entries.map(([m,d]) => {
+      const rate = Math.round((d.wins/d.total)*100);
+      const color = rate>=60 ? "var(--long)" : rate<=40 ? "var(--short)" : "var(--text-muted)";
+      return `<span class="age-tag" style="color:${color};border:1px solid ${color}44;">${HEB_MONTH_NAMES[m]||m}: ${rate}% (n=${d.total})</span>`;
+    }).join(" ");
+    return `<div style="margin-top:10px;"><div style="font-size:10.5px;color:var(--text-faint);margin-bottom:5px;">עונתיות היסטורית לפי חודש (מדגם קטן מאוד - לא מסקנה, רק אינדיקציה):</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${chips}</div></div>`;
+  }
+
+
   async function getApiKey() { return await storeGet("settings:twelvedata_key", null); }
+
+  // ---------------- ticker tape ----------------
+  const TICKER_INDICES = [
+    { symbol: "SPY", label: "S&P 500" },
+    { symbol: "QQQ", label: "נאסד״ק" },
+    { symbol: "DIA", label: "דאו ג׳ונס" },
+    { symbol: "XAU/USD", label: "זהב" },
+  ];
+
+  async function fetchTickerQuotes(symbols, apiKey) {
+    const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols.join(","))}&apikey=${apiKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    // Twelve Data returns a single object for one symbol, or {SYM: {...}, SYM2: {...}} for multiple
+    const map = symbols.length === 1 ? { [symbols[0]]: data } : data;
+    return symbols.map(sym => {
+      const q = map[sym];
+      if (!q || q.status === "error" || q.close === undefined) return null;
+      return { symbol: sym, price: parseFloat(q.close), changePct: parseFloat(q.percent_change) };
+    }).filter(Boolean);
+  }
+
+  async function refreshTicker() {
+    const track = $("ticker-track");
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      track.innerHTML = `<div class="ticker-loading">חבר מפתח Twelve Data (בלשונית "בדיקת מניה") כדי לראות נתוני שוק כאן</div>`;
+      return;
+    }
+    try {
+      const watchlist = await loadWatchlist();
+      const watchSymbols = watchlist.map(w => w.symbol);
+      const allSymbols = [...TICKER_INDICES.map(i=>i.symbol), ...watchSymbols];
+      const uniqueSymbols = [...new Set(allSymbols)];
+      const quotes = await fetchTickerQuotes(uniqueSymbols, apiKey);
+
+      const items = quotes.map(q => {
+        const idx = TICKER_INDICES.find(i => i.symbol === q.symbol);
+        const label = idx ? idx.label : q.symbol;
+        const chgClass = q.changePct >= 0 ? "pos" : "neg";
+        const chgSign = q.changePct >= 0 ? "+" : "";
+        return `<div class="ticker-item"><span class="tk-name">${label}</span><span class="tk-price">$${fmt(q.price)}</span><span class="tk-chg ${chgClass}">${chgSign}${q.changePct.toFixed(2)}%</span></div>`;
+      });
+
+      if (items.length === 0) {
+        track.innerHTML = `<div class="ticker-loading">לא הצלחתי למשוך נתוני שוק כרגע</div>`;
+        return;
+      }
+      const html = items.join("");
+      track.innerHTML = html + html; // duplicate for seamless scroll loop
+    } catch (e) {
+      console.error("Ticker refresh failed", e);
+      track.innerHTML = `<div class="ticker-loading">שגיאה במשיכת נתוני שוק</div>`;
+    }
+  }
 
   let TRADES = [];
   let histFilterFrom = null, histFilterTo = null;
@@ -1246,6 +1431,27 @@
     $("kpi-rec-pnl").textContent = recPnls.length ? (recPnlTotal>=0?"+":"")+"$"+fmt(recPnlTotal) : "—";
     $("kpi-rec-pnl").className = "v " + (recPnls.length ? (recPnlTotal>=0?"pos":"neg") : "");
 
+    // Portfolio heat: total $ risk across all open trades with known entry/stop/shares
+    const openWithRisk = open.filter(t => t.entry != null && t.stop != null && t.shares != null);
+    const totalHeat = openWithRisk.reduce((sum,t) => sum + Math.abs(t.entry - t.stop) * t.shares, 0);
+    const heatMultiple = RULES.riskUsd > 0 ? totalHeat / RULES.riskUsd : 0;
+    $("kpi-heat").textContent = openWithRisk.length ? "$" + fmt(totalHeat) : "—";
+    $("kpi-heat").className = "v " + (heatMultiple >= 3 ? "neg" : heatMultiple > 0 ? "" : "");
+    $("kpi-heat-sub").textContent = openWithRisk.length ? `${openWithRisk.length} עסקאות פתוחות · ${heatMultiple.toFixed(1)}x מהסיכון הרגיל שלך` : "";
+
+    // Sector concentration warning (only for trades where the user tagged a sector)
+    const sectorCounts = {};
+    open.filter(t => t.sector).forEach(t => { sectorCounts[t.sector] = (sectorCounts[t.sector]||0) + 1; });
+    const concentrated = Object.entries(sectorCounts).filter(([s,n]) => n >= 2);
+    const concSlot = $("concentration-warning-slot");
+    if (concentrated.length > 0) {
+      concSlot.innerHTML = concentrated.map(([s,n]) =>
+        `<div class="banner" style="background:var(--short-dim);border-color:rgba(255,122,112,.25);color:var(--short);"><span>⚠️ ${n} עסקאות פתוחות בסקטור "${s}" בו-זמנית - זה בעצם אותו הימור כמה פעמים, לא פיזור אמיתי.</span></div>`
+      ).join("");
+    } else {
+      concSlot.innerHTML = "";
+    }
+
     renderEquityCurve(curve);
     renderBehaviorFlags(TRADES, closed);
     renderInactivityBanner();
@@ -1469,6 +1675,46 @@
       const autoPassed = checks.filter(c=>!c.unverified).every(c=>c.ok);
       const bt = backtestSymbol(bars, direction);
 
+      // Earnings date check (graceful - free tier may not include this endpoint)
+      let earningsHtml = "";
+      try {
+        const earnUrl = `https://api.twelvedata.com/earnings?symbol=${encodeURIComponent(symbol)}&apikey=${apiKey}`;
+        const earnRes = await fetch(earnUrl);
+        const earnData = await earnRes.json();
+        if (earnData.status === "error" || !earnData.earnings) throw new Error("unavailable");
+        const today = new Date();
+        const upcoming = earnData.earnings
+          .map(e => new Date(e.date))
+          .filter(d => d >= today)
+          .sort((a,b) => a-b)[0];
+        if (upcoming) {
+          const daysUntil = Math.round((upcoming - today) / 86400000);
+          if (daysUntil <= 5) {
+            earningsHtml = `<div class="consistency-note" style="display:block;margin-top:10px;">📅 דוח רווחים בעוד ${daysUntil} ימים (${upcoming.toLocaleDateString('he-IL')}) - תנודתיות עלולה לזנק, שקול את הסיכון בהתאם.</div>`;
+          }
+        }
+      } catch (e) {
+        // Free tier may not include earnings data - fail silently, don't block the analysis
+      }
+
+      // Sector relative strength (only if user selected a sector ETF)
+      let sectorHtml = "";
+      const sectorEtf = $("auto-sector-etf").value;
+      if (sectorEtf) {
+        try {
+          const etfBars = await fetchDailyBars(sectorEtf, apiKey);
+          const lookback = 20;
+          const stockPerf = ((closes[closes.length-1] - closes[Math.max(0,closes.length-1-lookback)]) / closes[Math.max(0,closes.length-1-lookback)]) * 100;
+          const etfCloses = etfBars.map(b=>b.close);
+          const etfPerf = ((etfCloses[etfCloses.length-1] - etfCloses[Math.max(0,etfCloses.length-1-lookback)]) / etfCloses[Math.max(0,etfCloses.length-1-lookback)]) * 100;
+          const relDiff = stockPerf - etfPerf;
+          const relColor = relDiff >= 0 ? "var(--long)" : "var(--short)";
+          sectorHtml = `<div style="font-size:12px;margin-top:10px;color:var(--text-muted);">חוזק יחסי מול ${sectorEtf} (20 ימים): <b style="color:${relColor}">${symbol} ${stockPerf>=0?'+':''}${stockPerf.toFixed(1)}%</b> מול <b>${sectorEtf} ${etfPerf>=0?'+':''}${etfPerf.toFixed(1)}%</b> (${relDiff>=0?'+':''}${relDiff.toFixed(1)}% ${relDiff>=0?'חזק יותר':'חלש יותר'} מהסקטור)</div>`;
+        } catch (e) {
+          sectorHtml = `<div style="font-size:11px;color:var(--text-faint);margin-top:10px;">לא הצלחתי למשוך נתוני השוואת סקטור.</div>`;
+        }
+      }
+
       const recentLow = Math.min(...bars.slice(-10).map(b=>b.low));
       const recentHigh = Math.max(...bars.slice(-10).map(b=>b.high));
       const stop = direction==="long" ? recentLow : recentHigh;
@@ -1486,17 +1732,22 @@
       }
 
       const checklistHtml = checks.map(c => `<li><span class="${c.ok?'ok':'no'}">${c.unverified?'❓':(c.ok?'✓':'✗')}</span> ${c.label}</li>`).join("");
-      const successHtml = bt.winRate===null ? `<span class="success-tag low">אין מספיק היסטוריה למניה הזו</span>` : `<span class="success-tag ${bt.sample<8?'low':''}">${bt.winRate}% הצלחה (${bt.sample} מקרים בעבר)</span>`;
+      const successHtml = bt.winRate===null ? `<span class="success-tag low">אין מספיק היסטוריה סטטיסטית למניה הזו</span>` : `<span class="success-tag ${bt.sample<8?'low':''}">אחוז הצלחה היסטורי לניתוח הזה: ${bt.winRate}% (${bt.sample} מקרים בעבר)</span>`;
 
       resultBox.innerHTML = `
         <div class="rec-card glass ${direction}" style="margin-top:14px;">
+          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 מידע בלבד · לא המלצת פעולה</div>
           <div class="rec-top">
             <div style="display:flex;align-items:center;gap:8px;"><span class="sym">${symbol}</span><span class="dir-badge ${direction}">${direction==='long'?'LONG':'SHORT'}</span></div>
-            ${successHtml}
           </div>
-          <div class="verdict ${autoPassed?'pass':'fail'}">${autoPassed?'✓ עומד בכל התנאים שניתן לאמת אוטומטית':'✗ לא עומד בכל התנאים'}</div>
-          <ul class="checklist">${checklistHtml}</ul>
-          ${planHtml}
+          <div class="verdict ${autoPassed?'pass':'fail'}" style="margin-top:6px;">${autoPassed?'✓ המניה עומדת בכל התנאים שניתן לאמת אוטומטית':'✗ המניה לא עומדת בכל תנאי האסטרטגיה - לא מומלץ להיכנס לפי הכללים שהגדרת'}</div>
+          <div style="margin-top:8px;">${successHtml}</div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:4px;">↑ זהו שיעור ההצלחה ההיסטורי <b>של הסטאפ הספציפי הזה בלבד</b> (${direction==='long'?'לונג':'שורט'} על ${symbol}) - לא תחזית, ולא ערובה לתוצאה עתידית.</div>
+          <ul class="checklist" style="margin-top:12px;">${checklistHtml}</ul>
+          ${earningsHtml}
+          ${sectorHtml}
+          ${seasonalityHtml(bt.byMonth || {})}
+          ${planHtml ? `<div style="font-size:10.5px;color:var(--text-faint);margin-top:8px;">המספרים למטה הם חישוב תיאורטי "אם היו מתקיימים כל התנאים" - לא הוראת ביצוע:</div>${planHtml}` : ""}
           <div style="font-size:11px;color:var(--text-faint);margin-top:10px;">נתונים: Twelve Data · עודכן ${new Date().toLocaleString('he-IL')}</div>
         </div>`;
     } catch (e) {
@@ -1504,6 +1755,103 @@
     }
   }
   $("btn-auto-analyze").addEventListener("click", runAutoAnalysis);
+
+  // ---- high win-rate scanner ----
+  // ---- chart screenshot analysis (vision) ----
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  $("btn-analyze-chart").addEventListener("click", async () => {
+    const fileInput = $("chart-image-input");
+    const file = fileInput.files[0];
+    if (!file) { alert("נא לבחור תמונה קודם"); return; }
+    const context = $("chart-context").value.trim();
+    const resultBox = $("chart-analysis-result");
+    resultBox.innerHTML = `<div class="skeleton-card glass" style="margin-top:14px;"><div class="skeleton skeleton-line" style="width:50%;"></div><div class="skeleton skeleton-line" style="width:90%;"></div><div class="skeleton skeleton-line" style="width:75%;"></div></div>`;
+
+    try {
+      const base64 = await fileToBase64(file);
+      const mediaType = file.type || "image/png";
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 700,
+          system: "אתה עוזר לניתוח תבניות טכניות בגרפים. תאר אך ורק את מה שנראה בתמונה: מגמה נראית לעין, רמות תמיכה/התנגדות ויזואליות, תבניות נרות אם ניתן לזהות, מומנטום אם יש אינדיקטורים גלויים. תן קריאה זהירה ומאוזנת של האפשרויות לטווח הקרוב (לא ודאות). אסור לך לתת המלצת קנייה/מכירה ישירה, ואסור לך להמציא נתונים שלא נראים בתמונה. ענה בעברית, מאורגן וקצר.",
+          messages: [{ role: "user", content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+            { type: "text", text: context ? `הקשר: ${context}\n\nתאר את התבניות הטכניות בגרף הזה והאפשרויות לטווח הקרוב.` : "תאר את התבניות הטכניות בגרף הזה והאפשרויות לטווח הקרוב." }
+          ]}]
+        })
+      });
+      const data = await response.json();
+      const text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n") || "לא הצלחתי לנתח את התמונה.";
+      resultBox.innerHTML = `
+        <div class="rec-card glass" style="margin-top:14px;">
+          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 ניתוח דפוסים חזותי בלבד · לא המלצת פעולה · לא חיזוי ודאי</div>
+          <div style="font-size:13.5px;line-height:1.7;white-space:pre-wrap;">${text}</div>
+        </div>`;
+    } catch (e) {
+      resultBox.innerHTML = `<div class="consistency-note" style="display:block;margin-top:14px;">שגיאה בניתוח התמונה: ${e.message||e}</div>`;
+    }
+  });
+
+  $("btn-run-scan").addEventListener("click", async () => {
+    const raw = $("scan-symbols").value.trim();
+    if (!raw) { alert("נא להזין לפחות סימול אחד"); return; }
+    const symbols = raw.split(",").map(s=>s.trim().toUpperCase()).filter(Boolean);
+    const threshold = parseFloat($("scan-threshold").value) || 80;
+    const dirChoice = $("scan-direction").value;
+    const directions = dirChoice === "both" ? ["long","short"] : [dirChoice];
+    const apiKey = await getApiKey();
+    if (!apiKey) { $("api-key-setup").style.display = "block"; return; }
+
+    const progress = $("scan-progress");
+    const resultsList = $("scan-results-list");
+    progress.style.display = "block";
+    resultsList.innerHTML = "";
+    const matches = [];
+
+    let done = 0;
+    const total = symbols.length;
+    for (const sym of symbols) {
+      done++;
+      progress.textContent = `בודק ${sym} (${done}/${total})...`;
+      try {
+        const bars = await fetchDailyBars(sym, apiKey);
+        for (const dir of directions) {
+          const bt = backtestSymbol(bars, dir);
+          if (bt.winRate !== null && bt.winRate >= threshold && bt.sample >= 8) {
+            matches.push({ symbol: sym, direction: dir, winRate: bt.winRate, sample: bt.sample });
+          }
+        }
+      } catch (e) {
+        console.error(`Scan failed for ${sym}:`, e);
+      }
+      if (done < total) await sleep(1300); // respect Twelve Data free-tier rate limit
+    }
+
+    progress.style.display = "none";
+    if (matches.length === 0) {
+      resultsList.innerHTML = `<div class="empty-state"><div class="big">🔍</div>אף מניה מהרשימה לא עברה את סף ${threshold}% עם מדגם מספיק (8+).</div>`;
+    } else {
+      matches.sort((a,b) => b.winRate - a.winRate);
+      resultsList.innerHTML = matches.map(m => `
+        <div class="rec-card glass ${m.direction}" style="margin-bottom:10px;">
+          <div class="rec-top">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="sym">${m.symbol}</span><span class="dir-badge ${m.direction}">${m.direction==='long'?'LONG':'SHORT'}</span></div>
+            <span class="success-tag">${m.winRate}% (${m.sample} מקרים)</span>
+          </div>
+        </div>`).join("");
+      resultsList.innerHTML += `<div style="font-size:11px;color:var(--text-faint);margin-top:6px;">🔎 מידע בלבד - תוצאות בקטסט היסטורי, לא ערובה לעתיד. לחץ על "בדיקת מניה" למעלה לניתוח מלא של כל אחת.</div>`;
+    }
+    showToast(`נסרקו ${symbols.length} סימולים, נמצאו ${matches.length} התאמות`, "success");
+  });
 
   // ================= DAILY PICKS =================
   function historicalAvgAmount() {
@@ -1862,7 +2210,7 @@
 
   $("btn-add-trade").addEventListener("click", () => {
     ["add-symbol","add-entry","add-stop","add-target","add-shares","add-notes","add-pnl"].forEach(id => $(id).value="");
-    $("add-date").value = todayStr(); $("add-quick-mode").checked = false;
+    $("add-date").value = todayStr(); $("add-quick-mode").checked = false; $("add-sector").value = "";
     $("add-quick-fields").style.display = "none"; $("add-full-fields").style.display = "block";
     $("modal-add").classList.add("active");
   });
@@ -1875,16 +2223,17 @@
   $("add-confirm").addEventListener("click", async () => {
     const symbol = $("add-symbol").value.toUpperCase().trim();
     const date = $("add-date").value.trim() || todayStr();
+    const sector = $("add-sector").value || null;
     if (!symbol) { alert("נא למלא סימול"); return; }
     if ($("add-quick-mode").checked) {
       const pnl = parseFloat($("add-pnl").value);
       if (isNaN(pnl)) { alert("נא להזין רווח/הפסד"); return; }
-      TRADES.unshift({ id: Date.now()+Math.random(), symbol, direction: $("add-direction").value, entryDate: date, entry:null, stop:null, target:null, shares:null, status:"closed", exitDate: date, exitPrice:null, notes: $("add-notes").value.trim(), breakevenMoved:false, exitReason:null, manualPnl: pnl });
+      TRADES.unshift({ id: Date.now()+Math.random(), symbol, direction: $("add-direction").value, entryDate: date, entry:null, stop:null, target:null, shares:null, status:"closed", exitDate: date, exitPrice:null, notes: $("add-notes").value.trim(), breakevenMoved:false, exitReason:null, manualPnl: pnl, sector });
     } else {
       const entry = parseFloat($("add-entry").value), shares = parseInt($("add-shares").value,10);
       if (isNaN(entry) || isNaN(shares)) { alert("נא למלא מחיר כניסה ומספר מניות (או השתמש ברישום המהיר)"); return; }
       if (entry <= 0 || shares <= 0) { alert("מחיר כניסה ומספר מניות חייבים להיות גדולים מאפס"); return; }
-      TRADES.unshift({ id: Date.now()+Math.random(), symbol, direction: $("add-direction").value, entryDate: date, entry, stop: parseFloat($("add-stop").value)||null, target: parseFloat($("add-target").value)||null, shares, status:"open", exitDate:null, exitPrice:null, notes: $("add-notes").value.trim(), breakevenMoved:false, exitReason:null });
+      TRADES.unshift({ id: Date.now()+Math.random(), symbol, direction: $("add-direction").value, entryDate: date, entry, stop: parseFloat($("add-stop").value)||null, target: parseFloat($("add-target").value)||null, shares, status:"open", exitDate:null, exitPrice:null, notes: $("add-notes").value.trim(), breakevenMoved:false, exitReason:null, sector });
     }
     await saveTrades(); $("modal-add").classList.remove("active"); renderJournalView(); renderDashboard();
   });
@@ -1898,7 +2247,7 @@
       if (TRADES.filter(t=>t.status==="closed").length >= 3) {
         askCoach("סרוק את כל העסקאות שלי ותן לי תובנה קצרה אחת חשובה שכדאי שאשים לב אליה עכשיו - לא ברכה, ישר לעניין.", true);
       } else {
-        addQaMsg("bot", "היי - אני עובר על כל העסקאות וההמלצות שלך בכל שאלה שתשאל. תשאל אותי כל דבר, למשל: \"איך הלך לי בלונגים החודש?\"");
+        addQaMsg("bot", "היי - אני עובר על כל העסקאות וההמלצות שלך בכל שאלה שתשאל, וגם יכול לענות על שאלות כלליות על מסחר וניתוח טכני. תשאל אותי כל דבר, למשל: \"איך הלך לי בלונגים החודש?\" או \"מה זה RSI?\"");
       }
     }
   });
@@ -1936,7 +2285,7 @@
         method: "POST", headers: {"Content-Type":"application/json"},
         body: JSON.stringify({
           model: "claude-sonnet-4-6", max_tokens: 500,
-          system: "אתה מאמן משמעת למסחר, עונה אך ורק על סמך נתוני המסחר וההמלצות שסופקו לך ב-JSON (עסקאות פתוחות, עסקאות סגורות, המלצות סריקה). אסור לך להמציא מידע, לנחש מחירי מניות, או להוסיף ידע כללי על השוק שלא מגיע מהנתונים. אם השאלה לא ניתנת למענה מהנתונים, אמור זאת בפירוש. ענה בעברית, בקצרה, ישירות לעניין, בלי הקדמות מיותרות.",
+          system: "אתה מאמן מסחר. יש לך שני סוגי תשובות, ואתה בוחר לפי סוג השאלה: (1) שאלות על הביצועים/העסקאות/ההמלצות האישיות של המשתמש - עונה אך ורק על סמך נתוני המסחר שסופקו לך ב-JSON, אסור להמציא מספרים או לנחש נתונים אישיים שאין לך. (2) שאלות כלליות על מסחר, ניתוח טכני, אסטרטגיות, מושגים (למשל 'מה זה RSI', 'איך עובד ORB', 'מה ההבדל בין תמיכה להתנגדות') - כאן כן מותר ואף רצוי לענות מתוך הידע הכללי שלך על השוק, בלי קשר לנתונים האישיים. בשני המקרים: לעולם אל תמציא מחירים עדכניים, תחזיות שוק ספציפיות, או המלצת קנייה/מכירה קונקרטית - זה תמיד מידע/חינוך, לא ייעוץ השקעות. ענה בעברית, בקצרה, ישירות לעניין.",
           messages: [{ role: "user", content: `נתוני המסחר שלי:\n${JSON.stringify(summary)}\n\nשאלה: ${question}` }]
         })
       });
@@ -2059,11 +2408,13 @@
       const checklistHtml = checks.map(c => `<li><span class="${c.ok?'ok':'no'}">${c.unverified?'❓':(c.ok?'✓':'✗')}</span> ${c.label}</li>`).join("");
       resultBox.innerHTML = `
         <div class="rec-card glass ${direction}" style="margin-top:14px;border-color:rgba(227,177,94,.25);">
+          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 מידע בלבד · לא המלצת פעולה</div>
           <div class="rec-top">
             <div style="display:flex;align-items:center;gap:8px;"><span class="sym">XAUUSD</span><span class="dir-badge ${direction}">${direction==='long'?'LONG':'SHORT'}</span></div>
           </div>
-          <div class="verdict ${passed?'pass':'fail'}">${passed?'✓ עומד בתנאים שניתן לאמת':'✗ לא עומד בכל התנאים'}</div>
-          <ul class="checklist">${checklistHtml}</ul>
+          <div class="verdict ${passed?'pass':'fail'}" style="margin-top:6px;">${passed?'✓ עומד בתנאים שניתן לאמת - לא הוראת ביצוע':'✗ לא עומד בכל התנאים - לא מומלץ להיכנס לפי הכללים שהגדרת'}</div>
+          <ul class="checklist" style="margin-top:12px;">${checklistHtml}</ul>
+          <div style="font-size:10.5px;color:var(--text-faint);margin-top:8px;">המספרים למטה הם חישוב תיאורטי, לא הוראת ביצוע:</div>
           <div class="rec-grid">
             <div class="cell"><div class="l">מחיר</div><div class="v">$${fmt(last.close)}</div></div>
             <div class="cell"><div class="l">סטופ</div><div class="v short-t">$${fmt(stop)}</div></div>
@@ -2253,6 +2604,7 @@
     await saveWatchlist(watchlist);
     $("lt-watch-add").value = "";
     renderWatchlist();
+    refreshTicker();
     showToast(`${symbol} נוסף - לחץ "רענן הכל" כדי לראות נתונים`, "success");
   });
 
@@ -2279,6 +2631,7 @@
         const wl = await loadWatchlist();
         await saveWatchlist(wl.filter(x=>x.symbol!==w.symbol));
         renderWatchlist();
+        refreshTicker();
       });
       box.appendChild(row);
     }
@@ -2477,7 +2830,59 @@
       TRADES = await loadTrades();
       await renderDashboard();
     }
+    refreshTicker();
+    setInterval(refreshTicker, 60000); // refresh every 60s while the tab is open
   })();
+})();
+
+// ---------------- 3D perspective grid background (self-contained, outside main app scope) ----------------
+(function initBgGrid() {
+  const canvas = document.getElementById("bg-canvas");
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext("2d");
+  let w, h;
+  function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener("resize", resize);
+
+  const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let offset = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const hy = h * 0.42, vx = w * 0.5;
+
+    const numLines = 14;
+    for (let i = 0; i < numLines; i++) {
+      const t = ((i + offset) % numLines) / numLines; // 0 = far, 1 = near
+      const y = hy + Math.pow(t, 2.3) * (h - hy);
+      const alpha = 0.04 + t * 0.16;
+      ctx.strokeStyle = `rgba(108,147,245,${alpha})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    const numVert = 9;
+    for (let i = -numVert; i <= numVert; i++) {
+      const xFar = vx + i * (w / numVert) * 0.12;
+      const xNear = vx + i * (w / numVert) * 1.25;
+      ctx.strokeStyle = "rgba(227,177,94,0.06)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xFar, hy);
+      ctx.lineTo(xNear, h);
+      ctx.stroke();
+    }
+
+    if (!prefersReduced) {
+      offset += 0.0055;
+      requestAnimationFrame(draw);
+    }
+  }
+  draw();
 })();
 </script>
 </body>
