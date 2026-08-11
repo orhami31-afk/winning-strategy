@@ -538,13 +538,21 @@
 
   <!-- ============ DAILY PICKS ============ -->
   <section class="view" id="view-daily">
-    <div class="card glass">
-      <h2>ייבוא סריקה יומית</h2>
-      <p class="hint">הדבק את תוכן קובץ <code class="mono">history/scan_YYYY-MM-DD.json</code> מהבוט האוטומטי (רץ חינם דרך GitHub Actions כל יום ב-22:30).</p>
-      <textarea id="daily-import" rows="4" placeholder='[{"symbol":"AAPL","direction":"long","entry":190.2,...}]'></textarea>
-      <button class="btn" id="btn-import-daily">טען תוצאות</button>
+    <div class="card glass" id="daily-cloud-card" style="display:none;">
+      <h2>☁️ סנכרון אוטומטי</h2>
+      <p class="hint">הבוט כותב ישירות לחשבון שלך - אין צורך בהדבקה ידנית יותר.</p>
+      <button class="btn" id="btn-sync-cloud">🔄 סנכרן מהענן עכשיו</button>
+      <div id="cloud-sync-daily-status" style="font-size:12px;color:var(--text-faint);margin-top:8px;"></div>
     </div>
-    <div id="daily-date-label" class="mono" style="display:none;color:var(--text-faint);font-size:12px;margin-bottom:10px;"></div>
+    <details class="rules glass" id="daily-manual-import-details">
+      <summary>ייבוא ידני (אם עוד לא חיברת את הבוט לענן)</summary>
+      <div style="margin-top:14px;">
+        <p class="hint">הדבק את תוכן קובץ <code class="mono">history/scan_YYYY-MM-DD.json</code> מהבוט האוטומטי.</p>
+        <textarea id="daily-import" rows="4" placeholder='[{"symbol":"AAPL","direction":"long","entry":190.2,...}]'></textarea>
+        <button class="btn" id="btn-import-daily">טען תוצאות</button>
+      </div>
+    </details>
+    <div id="daily-date-label" class="mono" style="display:none;color:var(--text-faint);font-size:12px;margin-bottom:10px;margin-top:14px;"></div>
     <div id="daily-list"></div>
   </section>
 
@@ -1051,13 +1059,16 @@
   function updateAuthUI() {
     const overlay = $("auth-overlay");
     const logoutBtn = $("logout-btn");
+    const cloudConnected = !!(supabaseClient && currentUser);
     if (supabaseClient && !currentUser) {
       overlay.style.display = "flex";
       logoutBtn.style.display = "none";
     } else {
       overlay.style.display = "none";
-      logoutBtn.style.display = (supabaseClient && currentUser) ? "inline-flex" : "none";
+      logoutBtn.style.display = cloudConnected ? "inline-flex" : "none";
     }
+    $("daily-cloud-card").style.display = cloudConnected ? "block" : "none";
+    if (cloudConnected) $("daily-manual-import-details").removeAttribute("open");
   }
 
   $("logout-btn").addEventListener("click", async () => {
@@ -1096,6 +1107,7 @@
       }
       currentUser = result.data.user;
       updateAuthUI();
+      await syncScanResultsFromCloud(false);
       TRADES = await loadTrades();
       await renderDashboard();
       showToast("התחברת בהצלחה", "success");
@@ -1610,12 +1622,58 @@
     const idx = await loadDailyIndex();
     if (idx.length === 0) {
       $("daily-date-label").style.display = "none";
-      $("daily-list").innerHTML = `<div class="empty-state"><div class="big">📊</div>עדיין לא יובאו תוצאות סריקה.<div class="cta">ייבא קובץ JSON למעלה מהבוט האוטומטי כדי להתחיל</div></div>`;
+      $("daily-list").innerHTML = `<div class="empty-state"><div class="big">📊</div>עדיין לא הגיעו תוצאות סריקה.<div class="cta">${supabaseClient && currentUser ? 'לחץ "סנכרן מהענן" למעלה' : 'ייבא קובץ JSON למטה מהבוט האוטומטי כדי להתחיל'}</div></div>`;
       return;
     }
     const latest = idx[0]; const records = await loadDailyDay(latest);
     if (records) renderDailyDay(latest, records);
   }
+
+  // ---------------- cloud sync: pull daily_scan_results table into local daily: cache ----------------
+  async function syncScanResultsFromCloud(showStatus) {
+    if (!(supabaseClient && currentUser)) return false;
+    if (showStatus) $("cloud-sync-daily-status").textContent = "מסנכרן...";
+    try {
+      const { data, error } = await supabaseClient
+        .from("daily_scan_results")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .order("scan_date", { ascending: false });
+      if (error) throw error;
+
+      const byDate = {};
+      (data || []).forEach(row => {
+        const d = row.scan_date;
+        if (!byDate[d]) byDate[d] = [];
+        byDate[d].push({
+          symbol: row.symbol, direction: row.direction, entry: row.entry, stop: row.stop, target: row.target,
+          shares: row.shares, risk_usd: row.risk_usd, reward_usd: row.reward_usd,
+          suggested_hold_days: row.suggested_hold_days, estimated_success_pct: row.estimated_success_pct,
+          backtest_sample_size: row.backtest_sample_size, outcome: row.outcome, outcome_date: row.outcome_date,
+          scan_date: row.scan_date, entered: row.entered || false, entered_amount: row.entered_amount || null,
+          linked_trade_id: row.linked_trade_id || null,
+        });
+      });
+      for (const [d, records] of Object.entries(byDate)) {
+        await saveDailyDay(d, records);
+      }
+      if (showStatus) {
+        $("cloud-sync-daily-status").textContent = `סונכרן ${Object.keys(byDate).length} ימים · ${new Date().toLocaleTimeString('he-IL')}`;
+        showToast("סונכרן מהענן בהצלחה", "success");
+      }
+      return true;
+    } catch (e) {
+      console.error("Cloud sync failed", e);
+      if (showStatus) { $("cloud-sync-daily-status").textContent = "שגיאת סנכרון: " + (e.message || e); showToast("שגיאת סנכרון מהענן", "error"); }
+      return false;
+    }
+  }
+
+  $("btn-sync-cloud").addEventListener("click", async () => {
+    await syncScanResultsFromCloud(true);
+    await renderDailyCurrent();
+    await renderHistory();
+  });
 
   // ================= HISTORY =================
   $("btn-hist-filter").addEventListener("click", async () => {
@@ -2415,6 +2473,7 @@
     updateAuthUI();
     if (!(supabaseClient && !currentUser)) {
       // only load/render immediately if not blocked by the login overlay
+      if (supabaseClient && currentUser) await syncScanResultsFromCloud(false);
       TRADES = await loadTrades();
       await renderDashboard();
     }
