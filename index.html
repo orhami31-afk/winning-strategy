@@ -3,52 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#0A0D12">
+<meta name="theme-color" content="#070B09">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="אסטרטגיה מנצחת">
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIteQ16HXmNeo15jXkteZ15Qg157XoNem15fXqiIsICJzaG9ydF9uYW1lIjogIteQ16HXmNeo15jXkteZ15Qg157XoNem15fXqiIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjMEEwRDEyIiwgInRoZW1lX2NvbG9yIjogIiMwQTBEMTIiLCAiaWNvbnMiOiBbXX0=">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIteQ16HXmNeo15jXkteZ15Qg157XoNem15fXqiIsICJzaG9ydF9uYW1lIjogIteQ16HXmNeo15jXkteZ15Qg157XoNem15fXqiIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDcwQjA5IiwgInRoZW1lX2NvbG9yIjogIiMwNzBCMDkiLCAiaWNvbnMiOiBbXX0=">
 <title>אסטרטגיה מנצחת</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0A0D12;
-    --bg2: #0D1119;
-    --surface: rgba(20, 25, 36, 0.6);
-    --surface-solid: #12161F;
-    --surface-2: rgba(28, 34, 48, 0.55);
-    --border: rgba(120, 130, 160, 0.14);
-    --border-strong: rgba(150, 160, 190, 0.22);
-    --text: #E9EBF1;
-    --text-muted: #8B93A8;
-    --text-faint: #565E72;
-    --long: #3ED9A0;
-    --long-glow: rgba(62, 217, 160, 0.25);
-    --long-dim: rgba(62, 217, 160, 0.12);
-    --short: #FF7A70;
-    --short-glow: rgba(255, 122, 112, 0.22);
-    --short-dim: rgba(255, 122, 112, 0.12);
-    --gold: #E3B15E;
-    --gold-glow: rgba(227, 177, 94, 0.22);
-    --gold-dim: rgba(227, 177, 94, 0.12);
-    --accent: #6C93F5;
-    --accent-dim: rgba(108, 147, 245, 0.14);
+    --bg: #070B09;
+    --bg2: #0A0F0C;
+    --surface: rgba(16, 24, 20, 0.62);
+    --surface-solid: #0E1512;
+    --surface-2: rgba(25, 35, 30, 0.6);
+    --border: rgba(140, 175, 158, 0.14);
+    --border-strong: rgba(150, 185, 168, 0.24);
+    --text: #E7EDE9;
+    --text-muted: #8FA69A;
+    --text-faint: #58695F;
+    --long: #2ECC81;
+    --long-glow: rgba(46, 204, 129, 0.28);
+    --long-dim: rgba(46, 204, 129, 0.14);
+    --short: #E8615C;
+    --short-glow: rgba(232, 97, 92, 0.24);
+    --short-dim: rgba(232, 97, 92, 0.12);
+    --gold: #C7D3D0;
+    --gold-glow: rgba(199, 211, 208, 0.24);
+    --gold-dim: rgba(199, 211, 208, 0.12);
+    --accent: #34D6C0;
+    --accent-dim: rgba(52, 214, 192, 0.14);
     --radius: 16px;
     --radius-sm: 11px;
   }
   body[data-theme="light"] {
-    --bg: #F4F2EC;
-    --bg2: #EFEDE6;
-    --surface: rgba(255, 255, 255, 0.72);
+    --bg: #F0F4F1;
+    --bg2: #EAEFEA;
+    --surface: rgba(255, 255, 255, 0.74);
     --surface-solid: #FFFFFF;
-    --surface-2: rgba(230, 227, 217, 0.65);
-    --border: rgba(60, 55, 40, 0.12);
-    --border-strong: rgba(60, 55, 40, 0.22);
-    --text: #1E1C16;
-    --text-muted: #625C4E;
-    --text-faint: #8B8676;
+    --surface-2: rgba(224, 232, 225, 0.65);
+    --border: rgba(40, 60, 50, 0.12);
+    --border-strong: rgba(40, 60, 50, 0.22);
+    --text: #16211B;
+    --text-muted: #4D6156;
+    --text-faint: #7C9188;
   }
   .theme-toggle {
     background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
@@ -73,7 +73,7 @@
   .skeleton-card { padding: 16px; border-radius: var(--radius); }
 
   /* ---------- inactivity banner ---------- */
-  .banner { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--gold-dim); border: 1px solid rgba(227,177,94,.25); color: var(--gold); }
+  .banner { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--gold-dim); border: 1px solid rgba(199,211,208,.25); color: var(--gold); }
   .banner button { background: none; border: none; color: var(--text-faint); cursor: pointer; font-size: 15px; }
 
   /* ---------- ticker tape ---------- */
@@ -105,8 +105,8 @@
   .auth-overlay {
     position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
     background:
-      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(227,177,94,.08), transparent),
-      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(108,147,245,.09), transparent),
+      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(199,211,208,.08), transparent),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(52,214,192,.09), transparent),
       var(--bg);
     padding: 20px;
   }
@@ -116,15 +116,15 @@
   .auth-box .sub { text-align:center; color:var(--text-faint); font-size:12.5px; margin-bottom:22px; }
   .auth-tabs { display:flex; gap:6px; margin-bottom:18px; background:var(--surface-2); border-radius:10px; padding:4px; }
   .auth-tabs button { flex:1; background:none; border:none; padding:8px; border-radius:8px; color:var(--text-muted); font-family:'Assistant',sans-serif; font-weight:600; font-size:13px; cursor:pointer; }
-  .auth-tabs button.active { background: var(--gold); color:#14100A; }
+  .auth-tabs button.active { background: var(--gold); color:#0A1512; }
   .auth-error { color: var(--short); font-size:12.5px; margin-top:10px; display:none; }
   .auth-skip { text-align:center; margin-top:16px; font-size:12px; color:var(--text-faint); cursor:pointer; text-decoration:underline; }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background:
-      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(227,177,94,.06), transparent),
-      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(108,147,245,.07), transparent),
+      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(199,211,208,.06), transparent),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(52,214,192,.07), transparent),
       var(--bg);
     color: var(--text);
     font-family: 'Assistant', sans-serif;
@@ -165,7 +165,7 @@
     border-radius: 10px; transition: all .18s ease;
   }
   nav.tabs button:hover { color: var(--text); background: var(--surface-2); }
-  nav.tabs button.active { color: #0A0D12; background: var(--gold); font-weight: 700; }
+  nav.tabs button.active { color: #070B09; background: var(--gold); font-weight: 700; }
 
   main { max-width: 1020px; margin: 0 auto; padding: 20px 18px 40px; }
   .view { display: none; animation: fadein .25s ease; }
@@ -174,6 +174,37 @@
 
   /* ---------- KPI cards ---------- */
   .kpi-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 16px; }
+
+  /* ---------- dashboard hero + action panel ---------- */
+  .hero-card {
+    padding: 26px 22px; text-align: center; margin-bottom: 16px; position: relative; overflow: hidden;
+  }
+  .hero-card::before {
+    content: ""; position: absolute; inset: 0; border-radius: var(--radius);
+    background: radial-gradient(circle at 50% -10%, var(--gold-dim), transparent 65%);
+    pointer-events: none; animation: kpi-glow-pulse 5s ease-in-out infinite;
+  }
+  .hero-label { font-size: 12.5px; color: var(--text-faint); text-transform: uppercase; letter-spacing: .6px; position: relative; }
+  .hero-number {
+    font-family: 'IBM Plex Mono', monospace; font-size: 44px; font-weight: 700; margin-top: 6px; position: relative;
+    color: var(--text);
+  }
+  .hero-number.pos { color: var(--long); text-shadow: 0 0 30px var(--long-glow); }
+  .hero-number.neg { color: var(--short); text-shadow: 0 0 30px var(--short-glow); }
+  @media (max-width: 480px) { .hero-number { font-size: 34px; } }
+
+  .action-panel { border-color: rgba(199,211,208,.2); }
+  .action-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 560px) { .action-grid { grid-template-columns: 1fr 1fr; } }
+  .action-tile {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 12px; text-align: center;
+  }
+  .action-tile .l { font-size: 10.5px; color: var(--text-faint); }
+  .action-tile .v { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; margin-top: 4px; }
+
+  .advanced-metrics summary { display: flex; align-items: center; gap: 6px; }
+
   @media (min-width: 680px) { .kpi-grid { grid-template-columns: repeat(4,1fr); } }
   /* ---------- 3D depth background ---------- */
   #bg-canvas { position: fixed; inset: 0; z-index: -1; opacity: .45; pointer-events: none; }
@@ -200,6 +231,15 @@
   .kpi .sub2 { font-size: 10.5px; color: var(--text-faint); margin-top: 3px; position: relative; }
 
   .card { padding: 18px; margin-bottom: 14px; transition: transform .25s ease, box-shadow .25s ease; }
+
+  /* ---------- scroll-triggered 3D reveal ---------- */
+  .reveal {
+    opacity: 0; transform: translateY(22px) perspective(800px) rotateX(6deg);
+    transition: opacity .65s cubic-bezier(.16,.84,.44,1), transform .65s cubic-bezier(.16,.84,.44,1);
+  }
+  .reveal.reveal-visible { opacity: 1; transform: translateY(0) perspective(800px) rotateX(0deg); }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
   .card:hover { transform: perspective(900px) rotateX(0.8deg) translateY(-2px); box-shadow: 0 14px 34px rgba(0,0,0,.35); }
   @media (hover: none) { .card:hover, .kpi:hover { transform: none; } }
   .card h2 { font-family: 'Frank Ruhl Libre', serif; font-size: 17px; margin: 0 0 4px; font-weight: 700; }
@@ -231,7 +271,7 @@
 
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    background: linear-gradient(135deg, var(--gold), #C99544); color: #14100A; border: none;
+    background: linear-gradient(135deg, var(--gold), #8FA69A); color: #0A1512; border: none;
     font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 12px; cursor: pointer;
     width: 100%; margin-top: 16px; font-family: 'Assistant', sans-serif; transition: transform .12s ease, opacity .15s ease;
   }
@@ -282,7 +322,7 @@
   .entered-box input[type=number] { width: 120px; }
   .consistency-note {
     margin-top: 8px; font-size: 12px; padding: 8px 11px; border-radius: 9px;
-    background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(227,177,94,.25);
+    background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(199,211,208,.25);
   }
 
   /* ---------- checklist ---------- */
@@ -368,8 +408,8 @@
   /* ---------- floating Q&A ---------- */
   .qa-fab {
     position: fixed; bottom: 20px; left: 20px; width: 54px; height: 54px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--gold), #C99544); border: none; cursor: pointer;
-    font-size: 22px; box-shadow: 0 6px 24px rgba(227,177,94,.35); z-index: 40;
+    background: linear-gradient(135deg, var(--gold), #8FA69A); border: none; cursor: pointer;
+    font-size: 22px; box-shadow: 0 6px 24px rgba(199,211,208,.35); z-index: 40;
   }
   .qa-panel {
     display: none; position: fixed; bottom: 84px; left: 20px; width: min(360px, calc(100vw - 40px));
@@ -394,10 +434,10 @@
 
   /* ---------- gold section ---------- */
   .gold-card {
-    border-color: rgba(227,177,94,.3);
-    background: linear-gradient(160deg, rgba(227,177,94,.07), var(--surface));
+    border-color: rgba(199,211,208,.3);
+    background: linear-gradient(160deg, rgba(199,211,208,.07), var(--surface));
   }
-  .btn.gold-btn { background: linear-gradient(135deg, var(--gold), #B8863A); color: #14100A; }
+  .btn.gold-btn { background: linear-gradient(135deg, var(--gold), #6E8A80); color: #0A1512; }
   .gold-window-open { color: var(--long) !important; }
   .gold-window-closed { color: var(--text-faint) !important; }
 </style>
@@ -481,41 +521,61 @@
   <!-- ============ DASHBOARD ============ -->
   <section class="view active" id="view-dashboard">
     <div id="inactivity-banner-slot"></div>
-    <div class="kpi-grid">
-      <div class="kpi glass"><div class="l">המלצות פתוחות</div><div class="v" id="kpi-open" style="--glow-color:var(--accent-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">נכנסת בפועל</div><div class="v gold" id="kpi-entered" style="--glow-color:var(--gold-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">אחוז הצלחה כולל</div><div class="v" id="kpi-winrate" style="--glow-color:var(--long-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">Expectancy לעסקה</div><div class="v" id="kpi-expectancy" style="--glow-color:var(--long-dim)">—</div></div>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi glass"><div class="l">רווח/הפסד מצטבר</div><div class="v" id="kpi-pnl" style="--glow-color:var(--long-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">Max Drawdown</div><div class="v neg" id="kpi-drawdown" style="--glow-color:var(--short-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">עסקאות סגורות</div><div class="v" id="kpi-closed">—</div></div>
-      <div class="kpi glass"><div class="l">ימים במעקב</div><div class="v" id="kpi-days">—</div></div>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi glass"><div class="l">Profit Factor</div><div class="v" id="kpi-pf" style="--glow-color:var(--long-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">Sharpe (מפושט)</div><div class="v" id="kpi-sharpe" style="--glow-color:var(--accent-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">Sortino (מפושט)</div><div class="v" id="kpi-sortino" style="--glow-color:var(--accent-dim)">—</div></div>
-      <div class="kpi glass"><div class="l">רווח מהמלצות שנכנסו</div><div class="v" id="kpi-rec-pnl" style="--glow-color:var(--gold-dim)">—</div></div>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi glass"><div class="l">חום תיק (סיכון פתוח כולל)</div><div class="v" id="kpi-heat" style="--glow-color:var(--short-dim)">—</div><div class="sub2" id="kpi-heat-sub"></div></div>
-    </div>
-    <div id="concentration-warning-slot"></div>
 
-    <div class="card glass">
-      <h2>עקומת הון</h2>
-      <p class="hint">רווח/הפסד מצטבר לאורך זמן, לפי סדר סגירת העסקאות. עברו עם העכבר על הנקודות לפרטים.</p>
-      <svg id="equity-svg" viewBox="0 0 600 160" style="width:100%;height:160px;overflow:visible"></svg>
+    <!-- Hero: headline P&L + equity curve as the visual centerpiece -->
+    <div class="hero-card glass">
+      <div class="hero-label">רווח/הפסד מצטבר</div>
+      <div class="hero-number" id="kpi-pnl">—</div>
+      <svg id="equity-svg" viewBox="0 0 600 160" style="width:100%;height:150px;overflow:visible;margin-top:10px;"></svg>
       <div id="equity-tooltip" class="mono" style="display:none;font-size:12px;color:var(--text-muted);margin-top:6px;"></div>
     </div>
 
-    <div class="card glass">
-      <h2>🧭 דפוסים התנהגותיים</h2>
-      <p class="hint">מבוסס אך ורק על הנתונים שאתה הזנת - שום ניחוש.</p>
-      <div id="behavior-flags"></div>
+    <!-- Action panel: everything that needs the user's attention right now, in one place -->
+    <div class="card glass action-panel">
+      <h2>⚡ דורש תשומת לב עכשיו</h2>
+      <div class="action-grid">
+        <div class="action-tile">
+          <div class="l">המלצות פתוחות</div>
+          <div class="v" id="kpi-open" style="--glow-color:var(--accent-dim)">—</div>
+        </div>
+        <div class="action-tile">
+          <div class="l">נכנסת בפועל</div>
+          <div class="v gold" id="kpi-entered" style="--glow-color:var(--gold-dim)">—</div>
+        </div>
+        <div class="action-tile">
+          <div class="l">חום תיק (סיכון פתוח)</div>
+          <div class="v" id="kpi-heat" style="--glow-color:var(--short-dim)">—</div>
+          <div class="sub2" id="kpi-heat-sub"></div>
+        </div>
+      </div>
+      <div id="concentration-warning-slot"></div>
+      <div style="margin-top:6px;">
+        <div style="font-size:12.5px;color:var(--text-faint);margin-bottom:8px;">🧭 דפוסים התנהגותיים - מבוסס אך ורק על הנתונים שהזנת:</div>
+        <div id="behavior-flags"></div>
+      </div>
     </div>
+
+    <!-- Core performance: the two numbers that matter most -->
+    <div class="kpi-grid">
+      <div class="kpi glass"><div class="l">אחוז הצלחה כולל</div><div class="v" id="kpi-winrate" style="--glow-color:var(--long-dim)">—</div></div>
+      <div class="kpi glass"><div class="l">Expectancy לעסקה</div><div class="v" id="kpi-expectancy" style="--glow-color:var(--long-dim)">—</div></div>
+    </div>
+
+    <!-- Progressive disclosure: advanced metrics for power users, collapsed by default -->
+    <details class="rules glass advanced-metrics">
+      <summary>📊 מדדים מתקדמים</summary>
+      <div class="kpi-grid" style="margin-top:14px;">
+        <div class="kpi glass"><div class="l">Profit Factor</div><div class="v" id="kpi-pf" style="--glow-color:var(--long-dim)">—</div></div>
+        <div class="kpi glass"><div class="l">Sharpe (מפושט)</div><div class="v" id="kpi-sharpe" style="--glow-color:var(--accent-dim)">—</div></div>
+        <div class="kpi glass"><div class="l">Sortino (מפושט)</div><div class="v" id="kpi-sortino" style="--glow-color:var(--accent-dim)">—</div></div>
+        <div class="kpi glass"><div class="l">Max Drawdown</div><div class="v neg" id="kpi-drawdown" style="--glow-color:var(--short-dim)">—</div></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi glass"><div class="l">רווח מהמלצות שנכנסו</div><div class="v" id="kpi-rec-pnl" style="--glow-color:var(--gold-dim)">—</div></div>
+        <div class="kpi glass"><div class="l">עסקאות סגורות</div><div class="v" id="kpi-closed">—</div></div>
+        <div class="kpi glass"><div class="l">ימים במעקב</div><div class="v" id="kpi-days">—</div></div>
+      </div>
+    </details>
   </section>
 
   <!-- ============ SYMBOL CHECK ============ -->
@@ -545,7 +605,7 @@
       </select>
       <button class="btn" id="btn-auto-analyze">נתח מניה</button>
       <div id="auto-analysis-result"></div>
-      <div id="api-key-setup" style="display:none;margin-top:14px;padding:12px;border-radius:11px;background:var(--gold-dim);border:1px solid rgba(227,177,94,.25);font-size:12.5px;line-height:1.6;">
+      <div id="api-key-setup" style="display:none;margin-top:14px;padding:12px;border-radius:11px;background:var(--gold-dim);border:1px solid rgba(199,211,208,.25);font-size:12.5px;line-height:1.6;">
         כדי שהניתוח האוטומטי יעבוד, צריך לחבר פעם אחת מקור נתונים חינמי (Twelve Data - שכבת חינם, בלי כרטיס אשראי):
         <ol style="margin:8px 0 8px 18px;padding:0;">
           <li>היכנס ל-<span class="mono">twelvedata.com</span> ולחץ "Get free API key"</li>
@@ -879,6 +939,55 @@
   </div>
 </div>
 
+<!-- edit trade modal (works for both open and closed trades) -->
+<div class="modal-backdrop" id="modal-edit-trade">
+  <div class="modal glass">
+    <h3>עריכת עסקה</h3>
+    <label>סימול</label><input type="text" id="edit-symbol" style="text-transform:uppercase">
+    <div class="row2">
+      <div><label>כיוון</label><select id="edit-direction"><option value="long">לונג</option><option value="short">שורט</option></select></div>
+      <div><label>סטטוס</label><select id="edit-status"><option value="open">פתוחה</option><option value="closed">סגורה</option></select></div>
+    </div>
+    <label>סקטור</label>
+    <select id="edit-sector">
+      <option value="">לא צוין</option>
+      <option value="טכנולוגיה">טכנולוגיה</option>
+      <option value="פיננסים">פיננסים</option>
+      <option value="בריאות">בריאות</option>
+      <option value="אנרגיה">אנרגיה</option>
+      <option value="צריכה מחזורית">צריכה מחזורית</option>
+      <option value="צריכה בסיסית">צריכה בסיסית</option>
+      <option value="תעשייה">תעשייה</option>
+      <option value="שירותים ציבוריים">שירותים ציבוריים</option>
+      <option value="חומרי גלם">חומרי גלם</option>
+      <option value="נדל״ן">נדל״ן</option>
+      <option value="תקשורת">תקשורת</option>
+    </select>
+    <div class="row2">
+      <div><label>תאריך כניסה</label><input type="date" id="edit-entry-date"></div>
+      <div><label>מניות</label><input type="number" id="edit-shares" step="1"></div>
+    </div>
+    <div class="row2">
+      <div><label>כניסה ($)</label><input type="number" id="edit-entry" step="0.01"></div>
+      <div><label>סטופ ($)</label><input type="number" id="edit-stop" step="0.01"></div>
+    </div>
+    <label>יעד ($)</label><input type="number" id="edit-target" step="0.01">
+    <div id="edit-closed-fields" style="display:none;">
+      <div class="row2">
+        <div><label>תאריך יציאה</label><input type="date" id="edit-exit-date"></div>
+        <div><label>מחיר יציאה ($)</label><input type="number" id="edit-exit-price" step="0.01"></div>
+      </div>
+    </div>
+    <label>רווח/הפסד ידני ($) - דורס חישוב אוטומטי אם מולא</label>
+    <input type="number" id="edit-manual-pnl" step="0.01" placeholder="השאר ריק לחישוב רגיל">
+    <label>הערות</label><textarea id="edit-notes" rows="2"></textarea>
+    <div class="modal-actions">
+      <button class="btn ghost" id="edit-cancel" style="flex:1">ביטול</button>
+      <button class="btn" id="edit-save" style="flex:1;margin-top:0">שמור שינויים</button>
+    </div>
+  </div>
+</div>
+
 <!-- long-term: add holding modal -->
 <div class="modal-backdrop" id="modal-lt-add">
   <div class="modal glass">
@@ -1099,16 +1208,26 @@
   ];
 
   async function fetchTickerQuotes(symbols, apiKey) {
-    const url = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols.join(","))}&apikey=${apiKey}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    // Twelve Data returns a single object for one symbol, or {SYM: {...}, SYM2: {...}} for multiple
-    const map = symbols.length === 1 ? { [symbols[0]]: data } : data;
-    return symbols.map(sym => {
-      const q = map[sym];
-      if (!q || q.status === "error" || q.close === undefined) return null;
-      return { symbol: sym, price: parseFloat(q.close), changePct: parseFloat(q.percent_change) };
-    }).filter(Boolean);
+    // Uses the same time_series endpoint the rest of the app already relies on successfully
+    // (avoids the separate /quote endpoint, which may not behave the same on the free tier).
+    const results = [];
+    for (const sym of symbols) {
+      try {
+        const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=1day&outputsize=2&apikey=${apiKey}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.status === "error" || !data.values || data.values.length < 1) continue;
+        const values = data.values; // most recent first
+        const last = parseFloat(values[0].close);
+        const prev = values.length > 1 ? parseFloat(values[1].close) : last;
+        const changePct = prev ? ((last - prev) / prev) * 100 : 0;
+        results.push({ symbol: sym, price: last, changePct });
+      } catch (e) {
+        console.error(`Ticker fetch failed for ${sym}:`, e);
+      }
+      if (symbols.indexOf(sym) < symbols.length - 1) await sleep(900); // stay under free-tier rate limit
+    }
+    return results;
   }
 
   async function refreshTicker() {
@@ -1134,7 +1253,7 @@
       });
 
       if (items.length === 0) {
-        track.innerHTML = `<div class="ticker-loading">לא הצלחתי למשוך נתוני שוק כרגע</div>`;
+        track.innerHTML = `<div class="ticker-loading">לא הצלחתי למשוך נתוני שוק כרגע - ייתכן שחרגת ממכסת הבקשות היומית של Twelve Data (בדוק ב-twelvedata.com/account/usage)</div>`;
         return;
       }
       const html = items.join("");
@@ -1419,7 +1538,7 @@
     $("kpi-expectancy").textContent = expectancy === null ? "—" : (expectancy >= 0 ? "+" : "") + "$" + fmt(expectancy);
     $("kpi-expectancy").className = "v " + (expectancy === null ? "" : expectancy >= 0 ? "pos" : "neg");
     $("kpi-pnl").textContent = pnls.length ? (totalPnl >= 0 ? "+" : "") + "$" + fmt(totalPnl) : "—";
-    $("kpi-pnl").className = "v " + (pnls.length ? (totalPnl >= 0 ? "pos" : "neg") : "");
+    $("kpi-pnl").className = "hero-number " + (pnls.length ? (totalPnl >= 0 ? "pos" : "neg") : "");
     $("kpi-drawdown").textContent = maxDD > 0 ? "-$" + fmt(maxDD) : "$0.00";
     $("kpi-closed").textContent = closed.length;
     const firstDate = TRADES.length ? TRADES.map(t => t.entryDate).sort()[0] : null;
@@ -2136,12 +2255,88 @@
     });
   }
 
+  function openEditModal(trade) {
+    $("edit-symbol").value = trade.symbol || "";
+    $("edit-direction").value = trade.direction || "long";
+    $("edit-status").value = trade.status || "open";
+    $("edit-sector").value = trade.sector || "";
+    $("edit-entry-date").value = trade.entryDate || "";
+    $("edit-shares").value = trade.shares ?? "";
+    $("edit-entry").value = trade.entry ?? "";
+    $("edit-stop").value = trade.stop ?? "";
+    $("edit-target").value = trade.target ?? "";
+    $("edit-exit-date").value = trade.exitDate || "";
+    $("edit-exit-price").value = trade.exitPrice ?? "";
+    $("edit-manual-pnl").value = (trade.manualPnl !== undefined && trade.manualPnl !== null) ? trade.manualPnl : "";
+    $("edit-notes").value = trade.notes || "";
+    $("edit-closed-fields").style.display = trade.status === "closed" ? "block" : "none";
+    activeEditId = trade.id;
+    $("modal-edit-trade").classList.add("active");
+  }
+
+  let activeEditId = null;
+  $("edit-status").addEventListener("change", () => {
+    $("edit-closed-fields").style.display = $("edit-status").value === "closed" ? "block" : "none";
+  });
+  $("edit-cancel").addEventListener("click", () => $("modal-edit-trade").classList.remove("active"));
+  $("edit-save").addEventListener("click", async () => {
+    const t = TRADES.find(x => x.id === activeEditId);
+    if (!t) { $("modal-edit-trade").classList.remove("active"); return; }
+    const symbol = $("edit-symbol").value.toUpperCase().trim();
+    if (!symbol) { alert("נא למלא סימול"); return; }
+    t.symbol = symbol;
+    t.direction = $("edit-direction").value;
+    t.status = $("edit-status").value;
+    t.sector = $("edit-sector").value || null;
+    t.entryDate = $("edit-entry-date").value || t.entryDate;
+    t.shares = $("edit-shares").value !== "" ? parseFloat($("edit-shares").value) : null;
+    t.entry = $("edit-entry").value !== "" ? parseFloat($("edit-entry").value) : null;
+    t.stop = $("edit-stop").value !== "" ? parseFloat($("edit-stop").value) : null;
+    t.target = $("edit-target").value !== "" ? parseFloat($("edit-target").value) : null;
+    if (t.status === "closed") {
+      t.exitDate = $("edit-exit-date").value || todayStr();
+      t.exitPrice = $("edit-exit-price").value !== "" ? parseFloat($("edit-exit-price").value) : null;
+    } else {
+      t.exitDate = null; t.exitPrice = null; t.exitReason = null;
+    }
+    const manualPnlVal = $("edit-manual-pnl").value;
+    t.manualPnl = manualPnlVal !== "" ? parseFloat(manualPnlVal) : null;
+    t.notes = $("edit-notes").value.trim();
+    await saveTrades();
+    $("modal-edit-trade").classList.remove("active");
+    showToast("העסקה עודכנה", "success");
+    await renderJournalView();
+    await renderDashboard();
+  });
+
   function showDayDetail(dateStr) {
     const trades = tradesClosedOn(dateStr);
     const box = $("cal-day-detail");
     if (trades.length === 0) { box.innerHTML = ""; return; }
-    box.innerHTML = `<div class="day-detail glass"><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-faint);margin-bottom:8px;">${dateStr}</div>` +
-      trades.map(t => { const p = computePnl(t); return `<div class="trade-mini"><span>${t.symbol} <span class="dir-badge ${t.direction}" style="margin-right:4px;">${t.direction==='long'?'L':'S'}</span></span><span class="mono" style="color:${p>=0?'var(--long)':'var(--short)'}">${p>=0?'+':''}$${fmt(p)}</span></div>`; }).join("") + `</div>`;
+    box.innerHTML = `<div class="day-detail glass"><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-faint);margin-bottom:8px;">${dateStr}</div></div>`;
+    const container = box.querySelector(".day-detail");
+    trades.forEach(t => {
+      const p = computePnl(t);
+      const row = document.createElement("div");
+      row.className = "trade-mini";
+      row.innerHTML = `
+        <span>${t.symbol} <span class="dir-badge ${t.direction}" style="margin-right:4px;">${t.direction==='long'?'L':'S'}</span></span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="mono" style="color:${p>=0?'var(--long)':'var(--short)'}">${p>=0?'+':''}$${fmt(p)}</span>
+          <button class="btn ghost small edit-mini">ערוך</button>
+          <button class="btn danger-outline del-mini">מחק</button>
+        </span>`;
+      row.querySelector(".edit-mini").addEventListener("click", () => openEditModal(t));
+      row.querySelector(".del-mini").addEventListener("click", async () => {
+        if (!confirm(`למחוק את ${t.symbol}?`)) return;
+        TRADES = TRADES.filter(x => x.id !== t.id);
+        await saveTrades();
+        renderCalendar();
+        showDayDetail(dateStr);
+        await renderDashboard();
+      });
+      container.appendChild(row);
+    });
   }
 
   $("cal-prev").addEventListener("click", () => { calMonth--; if (calMonth<0){calMonth=11;calYear--;} renderCalendar(); $("cal-day-detail").innerHTML=""; });
@@ -2177,9 +2372,13 @@
       closeBtn.className = "btn small"; closeBtn.textContent = "סגור עסקה";
       closeBtn.addEventListener("click", () => { activeCloseId = t.id; $("close-price").value=""; $("close-date").value=todayStr(); selectedDebrief=null; document.querySelectorAll(".debrief-opt").forEach(b=>b.style.borderColor="var(--border)"); $("modal-close").classList.add("active"); });
       actions.appendChild(closeBtn);
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn ghost small"; editBtn.textContent = "ערוך";
+      editBtn.addEventListener("click", () => openEditModal(t));
+      actions.appendChild(editBtn);
       const delBtn = document.createElement("button");
       delBtn.className = "btn danger-outline"; delBtn.textContent = "מחק";
-      delBtn.addEventListener("click", async () => { if(!confirm(`למחוק את ${t.symbol}?`))return; TRADES = TRADES.filter(x=>x.id!==t.id); await saveTrades(); renderJournalView(); });
+      delBtn.addEventListener("click", async () => { if(!confirm(`למחוק את ${t.symbol}?`))return; TRADES = TRADES.filter(x=>x.id!==t.id); await saveTrades(); renderJournalView(); await renderDashboard(); });
       actions.appendChild(delBtn);
       list.appendChild(row);
     });
@@ -2407,7 +2606,7 @@
 
       const checklistHtml = checks.map(c => `<li><span class="${c.ok?'ok':'no'}">${c.unverified?'❓':(c.ok?'✓':'✗')}</span> ${c.label}</li>`).join("");
       resultBox.innerHTML = `
-        <div class="rec-card glass ${direction}" style="margin-top:14px;border-color:rgba(227,177,94,.25);">
+        <div class="rec-card glass ${direction}" style="margin-top:14px;border-color:rgba(199,211,208,.25);">
           <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 מידע בלבד · לא המלצת פעולה</div>
           <div class="rec-top">
             <div style="display:flex;align-items:center;gap:8px;"><span class="sym">XAUUSD</span><span class="dir-badge ${direction}">${direction==='long'?'LONG':'SHORT'}</span></div>
@@ -2831,7 +3030,9 @@
       await renderDashboard();
     }
     refreshTicker();
-    setInterval(refreshTicker, 60000); // refresh every 60s while the tab is open
+    // Refresh every 5 minutes (not every 60s) to conserve the free API daily quota,
+    // and skip refreshes entirely while the tab isn't visible (no point burning calls unseen).
+    setInterval(() => { if (document.visibilityState === "visible") refreshTicker(); }, 300000);
   })();
 })();
 
@@ -2847,17 +3048,20 @@
 
   const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let offset = 0;
+  let scrollY = 0;
+  window.addEventListener("scroll", () => { scrollY = window.scrollY || document.documentElement.scrollTop || 0; }, { passive: true });
 
   function draw() {
     ctx.clearRect(0, 0, w, h);
-    const hy = h * 0.42, vx = w * 0.5;
+    const parallax = Math.min(scrollY * 0.05, 70); // grid horizon drifts down slightly as you scroll
+    const hy = h * 0.42 + parallax, vx = w * 0.5;
 
     const numLines = 14;
     for (let i = 0; i < numLines; i++) {
       const t = ((i + offset) % numLines) / numLines; // 0 = far, 1 = near
       const y = hy + Math.pow(t, 2.3) * (h - hy);
       const alpha = 0.04 + t * 0.16;
-      ctx.strokeStyle = `rgba(108,147,245,${alpha})`;
+      ctx.strokeStyle = `rgba(52,214,192,${alpha})`;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, y);
@@ -2869,7 +3073,7 @@
     for (let i = -numVert; i <= numVert; i++) {
       const xFar = vx + i * (w / numVert) * 0.12;
       const xNear = vx + i * (w / numVert) * 1.25;
-      ctx.strokeStyle = "rgba(227,177,94,0.06)";
+      ctx.strokeStyle = "rgba(199,211,208,0.06)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(xFar, hy);
@@ -2883,6 +3087,36 @@
     }
   }
   draw();
+})();
+
+// ---------------- scroll-triggered 3D reveal for cards ----------------
+(function initScrollReveal() {
+  const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReduced) return;
+  const mainEl = document.querySelector("main");
+  if (!mainEl || !("IntersectionObserver" in window)) return;
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("reveal-visible");
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+
+  function bindReveals(root) {
+    root.querySelectorAll(".card.glass, .rec-card.glass, .trade-row.glass, .kpi.glass").forEach(el => {
+      if (el.dataset.revealBound) return;
+      el.dataset.revealBound = "1";
+      el.classList.add("reveal");
+      revealObserver.observe(el);
+    });
+  }
+
+  bindReveals(mainEl);
+  const mutObserver = new MutationObserver(() => bindReveals(mainEl));
+  mutObserver.observe(mainEl, { childList: true, subtree: true });
 })();
 </script>
 </body>
