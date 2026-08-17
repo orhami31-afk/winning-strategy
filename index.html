@@ -363,6 +363,7 @@
   .cal-day.empty { border: none; background: none; }
   .cal-day.has-trades { cursor: pointer; }
   .cal-day .pnl-dot { font-size: 9px; margin-top: 2px; }
+  .cal-day .pnl-count { font-size: 7.5px; color: var(--text-faint); margin-top: 1px; }
   .cal-day.today-marker { border-color: var(--gold); }
   .cal-legend { display: flex; gap: 14px; margin-top: 12px; font-size: 11px; color: var(--text-faint); align-items: center; flex-wrap: wrap; }
   .legend-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: 4px; }
@@ -740,6 +741,21 @@
   <!-- ============ JOURNAL (calendar) ============ -->
   <section class="view" id="view-journal">
     <div class="card glass">
+      <h2>📸 ייבוא עסקאות מצילום מסך</h2>
+      <p class="hint">
+        העלה צילום מסך מהברוקר שלך (היסטוריית עסקאות/סגירות) - המערכת תזהה אוטומטית את הסימולים,
+        הכמויות והרווח/הפסד בפועל, ותוסיף אותן ליומן <b>ישירות, בלי שתצטרך לאשר כל שורה</b>.
+        אם התאריך לא מופיע בתמונה, יש להזין אותו למטה.
+      </p>
+      <div class="row2">
+        <div><label>תאריך (אם לא מופיע בתמונה)</label><input type="date" id="trade-import-date"></div>
+        <div><label>תמונת צילום מסך</label><input type="file" id="trade-import-image" accept="image/*"></div>
+      </div>
+      <button class="btn" id="btn-import-trades-image">ייבא עסקאות מהתמונה</button>
+      <div id="trade-import-result"></div>
+    </div>
+
+    <div class="card glass">
       <div class="cal-header">
         <h2 id="cal-month-label">—</h2>
         <div class="cal-nav">
@@ -787,6 +803,19 @@
       <div id="gold-window-status" class="mono" style="font-size:12.5px;color:var(--text-faint);margin-bottom:10px;"></div>
       <button class="btn gold-btn" id="btn-gold-check">בדוק הזדמנות עכשיו</button>
       <div id="gold-result"></div>
+    </div>
+
+    <div class="card glass gold-card">
+      <h2 style="color:var(--gold);">📸 ניתוח זהב לפי תמונה</h2>
+      <p class="hint">
+        העלה בכל רגע נתון צילום מסך של גרף הזהב - קבל ניתוח תבניות טכניות וכיוון סביר, בכל שעה
+        (לא רק בחלון ה-ORB). <b>שים לב:</b> אין כאן "אחוז הצלחה" מבוסס נתונים היסטוריים אמיתיים
+        כמו בבדיקה האוטומטית למעלה - זה ניתוח דפוסים חזותי בלבד, עם רמת ביטחון איכותית (לא מספר מדויק).
+      </p>
+      <label>תמונת הגרף</label>
+      <input type="file" id="gold-image-input" accept="image/*">
+      <button class="btn gold-btn" id="btn-analyze-gold-image">נתח תמונה</button>
+      <div id="gold-image-result"></div>
     </div>
   </section>
 
@@ -2216,6 +2245,74 @@
 
   function tradesClosedOn(dateStr) { return TRADES.filter(t => t.status === "closed" && t.exitDate === dateStr); }
 
+  // ---- screenshot-based trade import ----
+  $("btn-import-trades-image").addEventListener("click", async () => {
+    const file = $("trade-import-image").files[0];
+    if (!file) { alert("נא לבחור תמונה קודם"); return; }
+    const fallbackDate = $("trade-import-date").value || todayStr();
+    const resultBox = $("trade-import-result");
+    resultBox.innerHTML = `<div class="skeleton-card glass" style="margin-top:14px;"><div class="skeleton skeleton-line" style="width:50%;"></div><div class="skeleton skeleton-line" style="width:85%;"></div><div class="skeleton skeleton-line" style="width:70%;"></div></div>`;
+
+    try {
+      const base64 = await fileToBase64(file);
+      const mediaType = file.type || "image/png";
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 1200,
+          system: "אתה מחלץ נתוני עסקאות מצילום מסך של ברוקר (היסטוריית מסחר/עסקאות סגורות). החזר אך ורק מערך JSON תקני, בלי טקסט נוסף, בלי markdown, בפורמט: [{\"symbol\":\"AAPL\",\"direction\":\"long\" or \"short\" or null אם לא ברור,\"shares\":100 or null,\"pnl\":123.45 (רווח/הפסד בדולרים, שלילי להפסד, null אם לא נראה מספר ברור),\"date\":\"YYYY-MM-DD\" or null אם לא מופיע בתמונה}]. אל תמציא שורות שלא רואים בבירור בתמונה. אם אין עסקאות ברורות, החזר מערך ריק [].",
+          messages: [{ role: "user", content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+            { type: "text", text: "חלץ את כל שורות העסקאות מהתמונה הזו." }
+          ]}]
+        })
+      });
+      const data = await response.json();
+      let text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+      text = text.replace(/^```json\s*/i, "").replace(/^```\s*/,"").replace(/```\s*$/,"").trim();
+      let extracted;
+      try { extracted = JSON.parse(text); } catch (e) { throw new Error("לא הצלחתי לפענח את התוצאה כרשימת עסקאות תקינה"); }
+      if (!Array.isArray(extracted) || extracted.length === 0) {
+        resultBox.innerHTML = `<div class="empty-state" style="margin-top:14px;"><div class="big">🤔</div>לא זיהיתי שורות עסקה ברורות בתמונה הזו.</div>`;
+        return;
+      }
+
+      const added = [];
+      for (const row of extracted) {
+        if (!row.symbol) continue;
+        const dateForRow = row.date || fallbackDate;
+        const trade = {
+          id: Date.now() + Math.random(), symbol: String(row.symbol).toUpperCase().trim(),
+          direction: row.direction === "short" ? "short" : "long",
+          entryDate: dateForRow, entry: null, stop: null, target: null,
+          shares: (row.shares !== null && row.shares !== undefined) ? parseFloat(row.shares) : null,
+          status: "closed", exitDate: dateForRow, exitPrice: null,
+          notes: "יובא מצילום מסך", breakevenMoved: false, exitReason: null,
+          manualPnl: (row.pnl !== null && row.pnl !== undefined) ? parseFloat(row.pnl) : 0,
+        };
+        TRADES.unshift(trade);
+        added.push(trade);
+      }
+      await saveTrades();
+
+      const rowsHtml = added.map(t => `
+        <div class="trade-mini">
+          <span>${t.symbol} <span class="dir-badge ${t.direction}" style="margin-right:4px;">${t.direction==='long'?'L':'S'}</span> ${t.shares?`· ${t.shares} מניות`:''}</span>
+          <span class="mono" style="color:${t.manualPnl>=0?'var(--long)':'var(--short)'}">${t.manualPnl>=0?'+':''}$${fmt(t.manualPnl)}</span>
+        </div>`).join("");
+      resultBox.innerHTML = `
+        <div class="rec-card glass" style="margin-top:14px;">
+          <div class="rec-top"><span class="sym">${added.length} עסקאות יובאו ונוספו ליומן</span></div>
+          <div style="margin-top:10px;">${rowsHtml}</div>
+        </div>`;
+      showToast(`${added.length} עסקאות נוספו ליומן`, "success");
+      await renderJournalView();
+      await renderDashboard();
+    } catch (e) {
+      resultBox.innerHTML = `<div class="consistency-note" style="display:block;margin-top:14px;">שגיאה בייבוא: ${e.message||e}</div>`;
+    }
+  });
+
   async function renderJournalView() {
     renderCalendar();
     renderOpenTrades();
@@ -2230,8 +2327,12 @@
     const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
 
     const closed = TRADES.filter(t => t.status === "closed" && t.exitDate);
-    const dailyPnl = {};
-    closed.forEach(t => { const d = t.exitDate; dailyPnl[d] = (dailyPnl[d]||0) + (computePnl(t)||0); });
+    const dailyPnl = {}, dailyCount = {};
+    closed.forEach(t => {
+      const d = t.exitDate;
+      dailyPnl[d] = (dailyPnl[d]||0) + (computePnl(t)||0);
+      dailyCount[d] = (dailyCount[d]||0) + 1;
+    });
     const maxAbs = Math.max(1, ...Object.values(dailyPnl).map(Math.abs));
 
     let html = "";
@@ -2239,12 +2340,13 @@
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const pnl = dailyPnl[dateStr];
+      const count = dailyCount[dateStr];
       const isToday = dateStr === todayStr();
       let bg = "var(--surface-2)", extra = "";
       if (pnl !== undefined) {
         const intensity = 0.15 + 0.55 * (Math.abs(pnl)/maxAbs);
-        bg = pnl >= 0 ? `rgba(62,217,160,${intensity})` : `rgba(255,122,112,${intensity})`;
-        extra = `<div class="pnl-dot">${pnl>=0?'+':''}${Math.round(pnl)}</div>`;
+        bg = pnl >= 0 ? `rgba(46,204,129,${intensity})` : `rgba(232,97,92,${intensity})`;
+        extra = `<div class="pnl-dot">${pnl>=0?'+':''}${Math.round(pnl)}</div><div class="pnl-count">${count} עסק'</div>`;
       }
       html += `<div class="cal-day ${pnl!==undefined?'has-trades':''} ${isToday?'today-marker':''}" data-date="${dateStr}" style="background:${bg}">${day}${extra}</div>`;
     }
@@ -2313,14 +2415,20 @@
     const trades = tradesClosedOn(dateStr);
     const box = $("cal-day-detail");
     if (trades.length === 0) { box.innerHTML = ""; return; }
-    box.innerHTML = `<div class="day-detail glass"><div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-faint);margin-bottom:8px;">${dateStr}</div></div>`;
+    const dayTotal = trades.reduce((sum,t) => sum + (computePnl(t)||0), 0);
+    box.innerHTML = `<div class="day-detail glass">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-faint);">${dateStr}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;">${trades.length} עסקאות · <b style="color:${dayTotal>=0?'var(--long)':'var(--short)'}">${dayTotal>=0?'+':''}$${fmt(dayTotal)}</b></span>
+      </div>
+    </div>`;
     const container = box.querySelector(".day-detail");
     trades.forEach(t => {
       const p = computePnl(t);
       const row = document.createElement("div");
       row.className = "trade-mini";
       row.innerHTML = `
-        <span>${t.symbol} <span class="dir-badge ${t.direction}" style="margin-right:4px;">${t.direction==='long'?'L':'S'}</span></span>
+        <span>${t.symbol} <span class="dir-badge ${t.direction}" style="margin-right:4px;">${t.direction==='long'?'L':'S'}</span> ${t.shares?`<span class="mono" style="color:var(--text-faint);font-size:11.5px;">· ${t.shares} מניות</span>`:''}</span>
         <span style="display:flex;align-items:center;gap:8px;">
           <span class="mono" style="color:${p>=0?'var(--long)':'var(--short)'}">${p>=0?'+':''}$${fmt(p)}</span>
           <button class="btn ghost small edit-mini">ערוך</button>
@@ -2634,6 +2742,39 @@
   }
   $("btn-gold-check").addEventListener("click", runGoldCheck);
   document.querySelector('[data-view="gold"]').addEventListener("click", renderGoldWindowStatus);
+
+  // ---- gold screenshot analysis (any time, qualitative - not a historical backtest %) ----
+  $("btn-analyze-gold-image").addEventListener("click", async () => {
+    const file = $("gold-image-input").files[0];
+    if (!file) { alert("נא לבחור תמונה קודם"); return; }
+    const resultBox = $("gold-image-result");
+    resultBox.innerHTML = `<div class="skeleton-card glass" style="margin-top:14px;"><div class="skeleton skeleton-line" style="width:50%;"></div><div class="skeleton skeleton-line" style="width:88%;"></div><div class="skeleton skeleton-line" style="width:72%;"></div></div>`;
+
+    try {
+      const base64 = await fileToBase64(file);
+      const mediaType = file.type || "image/png";
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 800,
+          system: "אתה מנתח תבניות טכניות בגרף זהב (XAUUSD). תאר אך ורק את מה שרואים בתמונה: מגמה, רמות תמיכה/התנגדות ויזואליות, תבניות נרות, מומנטום אם יש אינדיקטורים גלויים (RSI/MACD/VWAP וכו' אם מופיעים). תן הטיה (long/short/ניטרלי) ורמת ביטחון איכותית בזיהוי התבנית - גבוהה/בינונית/נמוכה - **לעולם לא אחוז מספרי מדויק**, כי אין לך נתונים היסטוריים אמיתיים לחשב ממנו סטטיסטיקה, רק את התמונה הבודדת הזו. אסור לך להמציא מחירים או רמות שלא נראות בבירור. ענה בעברית, מאורגן בכמה שורות קצרות: מגמה, רמות מפתח, הטיה, רמת ביטחון.",
+          messages: [{ role: "user", content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+            { type: "text", text: "נתח את גרף הזהב הזה - מגמה, רמות מפתח, הטיה סבירה, ורמת ביטחון." }
+          ]}]
+        })
+      });
+      const data = await response.json();
+      const text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n") || "לא הצלחתי לנתח את התמונה.";
+      resultBox.innerHTML = `
+        <div class="rec-card glass" style="margin-top:14px;border-color:rgba(199,211,208,.25);">
+          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 ניתוח דפוסים חזותי · לא אחוז הצלחה היסטורי · לא המלצת פעולה</div>
+          <div style="font-size:13.5px;line-height:1.7;white-space:pre-wrap;">${text}</div>
+        </div>`;
+    } catch (e) {
+      resultBox.innerHTML = `<div class="consistency-note" style="display:block;margin-top:14px;">שגיאה בניתוח התמונה: ${e.message||e}</div>`;
+    }
+  });
 
   // ================= LONG TERM INVESTING (separate portfolio) =================
   async function loadHoldings() { return await storeGet("longterm:holdings", []); }
