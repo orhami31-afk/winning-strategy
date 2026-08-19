@@ -472,6 +472,7 @@
     <div style="display:flex;align-items:center;gap:8px;">
       <div class="sub" id="clock-label">—</div>
       <button class="theme-toggle" id="theme-toggle-btn" title="החלף מצב תצוגה">🌙</button>
+      <button class="theme-toggle" id="ai-settings-btn" title="הגדרות בינה מלאכותית">🤖</button>
       <button class="theme-toggle" id="cloud-sync-btn" title="סנכרון ענן">☁️</button>
       <button class="theme-toggle" id="backup-export-btn" title="ייצוא גיבוי">💾</button>
       <button class="theme-toggle" id="backup-import-btn" title="ייבוא גיבוי">📂</button>
@@ -514,6 +515,29 @@
       <button class="btn" id="cloud-sync-save" style="flex:1;margin-top:0">שמור והתחבר</button>
     </div>
     <button class="btn danger-outline" id="cloud-sync-disconnect" style="width:100%;margin-top:10px;display:none;">התנתק מסנכרון ענן</button>
+  </div>
+</div>
+
+<!-- AI (Gemini) settings modal -->
+<div class="modal-backdrop" id="modal-ai-settings">
+  <div class="modal glass">
+    <h3>🤖 בינה מלאכותית (Gemini)</h3>
+    <p class="hint">
+      מפעיל את הבוט לשאלות, ניתוח תרשימים מתמונה, וייבוא עסקאות מצילום מסך.
+      משתמש ב-Gemini API של Google - חינמי לגמרי, בלי כרטיס אשראי.
+    </p>
+    <ol style="margin:0 0 10px 18px;padding:0;font-size:12.5px;color:var(--text-muted);line-height:1.7;">
+      <li>היכנס ל-<span class="mono">aistudio.google.com</span></li>
+      <li>התחבר עם חשבון Google (חינמי)</li>
+      <li>לחץ "Get API key" → "Create API key"</li>
+      <li>העתק את המפתח והדבק כאן:</li>
+    </ol>
+    <label>Gemini API Key</label><input type="text" id="gemini-key-input" placeholder="AIza...">
+    <div id="ai-settings-status" style="font-size:12.5px;margin-top:10px;color:var(--text-muted);"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="ai-settings-cancel" style="flex:1">סגור</button>
+      <button class="btn" id="ai-settings-save" style="flex:1;margin-top:0">שמור מפתח</button>
+    </div>
   </div>
 </div>
 
@@ -606,6 +630,9 @@
       </select>
       <button class="btn" id="btn-auto-analyze">נתח מניה</button>
       <div id="auto-analysis-result"></div>
+      <div style="margin-top:10px;display:flex;justify-content:flex-end;">
+        <button class="btn ghost small" id="btn-clear-data-cache" title="נתונים נשמרים כמטמון ליום אחד כדי לחסוך במכסת ה-API - לחץ כדי לרענן הכל עכשיו">🗑️ נקה מטמון נתונים</button>
+      </div>
       <div id="api-key-setup" style="display:none;margin-top:14px;padding:12px;border-radius:11px;background:var(--gold-dim);border:1px solid rgba(199,211,208,.25);font-size:12.5px;line-height:1.6;">
         כדי שהניתוח האוטומטי יעבוד, צריך לחבר פעם אחת מקור נתונים חינמי (Twelve Data - שכבת חינם, בלי כרטיס אשראי):
         <ol style="margin:8px 0 8px 18px;padding:0;">
@@ -652,11 +679,13 @@
     <div class="card glass">
       <h2>📸 ניתוח תרשים מצילום מסך</h2>
       <p class="hint">
-        העלה צילום מסך של גרף (מניה, זהב, כל נכס) - קבל ניתוח תבניות טכניות למה שנראה בתרשים
-        לטווח הקרוב (דקות-שעות). <b>זה ניתוח דפוסים חזותי בלבד</b> - לא חיזוי ודאי, ולא המלצת פעולה.
+        העלה צילום מסך של גרף - קבל ניתוח תבניות טכניות לטווח הקרוב.
+        <b>אם תזין סימול</b>, המערכת תמשוך נתונים אמיתיים ו<b>תחשב בעצמה</b> Volume Profile
+        (POC + אזור ערך) ורמות פיבונאצ'י מדויקות - לא מנחשת אותן מהתמונה. בלי סימול, הניתוח
+        יתבסס רק על מה שרואים בתמונה. <b>זה ניתוח דפוסים - לא חיזוי ודאי, ולא המלצת פעולה.</b>
       </p>
-      <label>סימול / הקשר (אופציונלי)</label>
-      <input type="text" id="chart-context" placeholder="למשל: AAPL, גרף 15 דקות">
+      <label>סימול (למשל AAPL) - כדי לחשב Volume Profile ופיבונאצ'י אמיתיים</label>
+      <input type="text" id="chart-context" placeholder="AAPL" style="text-transform:uppercase;">
       <label>תמונת הגרף</label>
       <input type="file" id="chart-image-input" accept="image/*">
       <button class="btn" id="btn-analyze-chart">נתח תרשים</button>
@@ -821,6 +850,21 @@
 
   <!-- ============ LONG TERM INVESTING ============ -->
   <section class="view" id="view-longterm">
+    <div class="card glass">
+      <h2>📸 ייבוא אחזקות/מעקב מצילום מסך</h2>
+      <p class="hint">
+        העלה צילום מסך של תיק ההשקעות שלך (מהברוקר, אפליקציית מסחר וכו'). המערכת תזהה סימולים,
+        ואם רואים גם כמות מניות ומחיר קנייה - <b>תוסיף אותם ישירות לתיק שלך</b> (בלי אישור ידני).
+        כל הסימולים שיזוהו יתווספו גם ל<b>רשימת המעקב</b> אוטומטית, גם אם אין להם כמות/מחיר ברור בתמונה.
+      </p>
+      <div class="row2">
+        <div><label>תאריך קנייה (אם לא מופיע בתמונה)</label><input type="date" id="lt-import-date"></div>
+        <div><label>תמונת התיק</label><input type="file" id="lt-import-image" accept="image/*"></div>
+      </div>
+      <button class="btn" id="btn-import-holdings-image">ייבא מהתמונה</button>
+      <div id="lt-import-result"></div>
+    </div>
+
     <div class="card glass">
       <div class="journal-toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <h2 style="margin:0;">רשימת מעקב לטווח ארוך</h2>
@@ -1159,13 +1203,85 @@
     return min + (maxIdx+0.5)*binW;
   }
 
+  /** Real Volume Profile: POC + ~70% Value Area (high/low), computed from actual bar data. */
+  function volumeProfileAnalysis(bars, numBins=40) {
+    const lows = bars.map(b=>b.low), highs = bars.map(b=>b.high);
+    const min = Math.min(...lows), max = Math.max(...highs);
+    if (max<=min) return null;
+    const binW = (max-min)/numBins; const binVol = new Array(numBins).fill(0);
+    bars.forEach(b => {
+      const touched = [];
+      for (let i=0;i<numBins;i++) { const lo=min+i*binW, hi=min+(i+1)*binW; if (hi>b.low && lo<b.high) touched.push(i); }
+      if (touched.length===0) return;
+      const per = b.volume/touched.length;
+      touched.forEach(i=>binVol[i]+=per);
+    });
+    let pocIdx=0; for (let i=1;i<numBins;i++) if (binVol[i]>binVol[pocIdx]) pocIdx=i;
+    const totalVol = binVol.reduce((a,b)=>a+b,0);
+    // grow the value area outward from POC until it holds ~70% of total volume
+    let loIdx = pocIdx, hiIdx = pocIdx, areaVol = binVol[pocIdx];
+    while (areaVol < totalVol * 0.7 && (loIdx > 0 || hiIdx < numBins-1)) {
+      const nextLo = loIdx > 0 ? binVol[loIdx-1] : -1;
+      const nextHi = hiIdx < numBins-1 ? binVol[hiIdx+1] : -1;
+      if (nextHi >= nextLo) { hiIdx++; areaVol += binVol[hiIdx]; }
+      else { loIdx--; areaVol += binVol[loIdx]; }
+    }
+    return {
+      poc: min + (pocIdx+0.5)*binW,
+      valueAreaLow: min + loIdx*binW,
+      valueAreaHigh: min + (hiIdx+1)*binW,
+    };
+  }
+
+  /** Real Fibonacci retracement levels from the actual swing high/low over the lookback window. */
+  function fibonacciLevels(bars, lookback=60) {
+    const recent = bars.slice(-lookback);
+    if (recent.length < 5) return null;
+    const high = Math.max(...recent.map(b=>b.high));
+    const low = Math.min(...recent.map(b=>b.low));
+    const diff = high - low;
+    if (diff <= 0) return null;
+    const ratios = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0];
+    const levels = {};
+    ratios.forEach(r => { levels[r.toFixed(3)] = +(high - diff*r).toFixed(2); });
+    return { high, low, levels };
+  }
+
+  // In-memory cache for the current page session (instant, no storage round-trip),
+  // backed by a same-day persistent cache (survives reload) - both exist so a symbol
+  // fetched once anywhere in the app (auto-analysis, chart analysis, scanner, watchlist,
+  // ticker, gold) is reused everywhere else that day instead of burning API quota again.
+  const _dailyBarsMemCache = {};
+  let _cacheGen = null;
+  async function getCacheGen() {
+    if (_cacheGen === null) _cacheGen = await storeGet("cache:gen", 0);
+    return _cacheGen;
+  }
+
   async function fetchDailyBars(symbol, apiKey) {
+    const gen = await getCacheGen();
+    const cacheKey = `cache:bars:${gen}:${symbol}:${todayStr()}`;
+    if (_dailyBarsMemCache[cacheKey]) return _dailyBarsMemCache[cacheKey];
+    const cached = await storeGet(cacheKey, null);
+    if (cached) { _dailyBarsMemCache[cacheKey] = cached; return cached; }
+
     const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=260&apikey=${apiKey}`;
     const res = await fetch(url);
     const data = await res.json();
     if (data.status === "error" || !data.values) throw new Error(data.message || "סימול לא נמצא או שגיאת API");
-    return data.values.map(v => ({ date: v.datetime, open:+v.open, high:+v.high, low:+v.low, close:+v.close, volume:+v.volume })).reverse();
+    const bars = data.values.map(v => ({ date: v.datetime, open:+v.open, high:+v.high, low:+v.low, close:+v.close, volume:+v.volume })).reverse();
+    _dailyBarsMemCache[cacheKey] = bars;
+    await storeSet(cacheKey, bars);
+    return bars;
   }
+
+  $("btn-clear-data-cache").addEventListener("click", async () => {
+    const gen = await getCacheGen();
+    _cacheGen = gen + 1;
+    await storeSet("cache:gen", _cacheGen);
+    for (const key of Object.keys(_dailyBarsMemCache)) delete _dailyBarsMemCache[key];
+    showToast("המטמון נוקה - הבדיקה הבאה תמשוך נתונים טריים מה-API", "success");
+  });
 
   function backtestSymbol(bars, direction, maxHoldDays=10, rr=2) {
     if (bars.length < 80) return { winRate: null, sample: 0, byMonth: {} };
@@ -1228,6 +1344,60 @@
 
   async function getApiKey() { return await storeGet("settings:twelvedata_key", null); }
 
+  // ---------------- Gemini (free AI) ----------------
+  async function getGeminiKey() { return await storeGet("settings:gemini_key", null); }
+  async function saveGeminiKey(key) { await storeSet("settings:gemini_key", key); }
+
+  $("ai-settings-btn").addEventListener("click", async () => {
+    const key = await getGeminiKey();
+    $("gemini-key-input").value = key || "";
+    $("ai-settings-status").textContent = key ? "מפתח מחובר" : "לא מוגדר עדיין";
+    $("modal-ai-settings").classList.add("active");
+  });
+  $("ai-settings-cancel").addEventListener("click", () => $("modal-ai-settings").classList.remove("active"));
+  $("ai-settings-save").addEventListener("click", async () => {
+    const key = $("gemini-key-input").value.trim();
+    if (!key) { showToast("נא להדביק מפתח", "error"); return; }
+    await saveGeminiKey(key);
+    showToast("מפתח Gemini נשמר", "success");
+    $("modal-ai-settings").classList.remove("active");
+  });
+
+  /**
+   * Calls Google's free Gemini API. `parts` is an array mixing plain strings (text)
+   * and {mediaType, base64} objects (images). Returns the response text, or throws.
+   */
+  async function callGemini(systemInstruction, parts, maxOutputTokens) {
+    const key = await getGeminiKey();
+    if (!key) {
+      $("modal-ai-settings").classList.add("active");
+      $("ai-settings-status").textContent = "צריך לחבר מפתח Gemini חינמי קודם (ראה הוראות למעלה)";
+      throw new Error("לא מוגדר מפתח Gemini - חבר אחד בחלון שנפתח (חינמי, בלי כרטיס אשראי)");
+    }
+    const contentParts = parts.map(p => {
+      if (typeof p === "string") return { text: p };
+      return { inline_data: { mime_type: p.mediaType, data: p.base64 } };
+    });
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`;
+    const res = await fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: contentParts }],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: { maxOutputTokens: maxOutputTokens || 800 },
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || "שגיאת Gemini API");
+    const candidate = data.candidates && data.candidates[0];
+    const text = candidate && candidate.content && candidate.content.parts
+      ? candidate.content.parts.map(p => p.text || "").join("")
+      : "";
+    if (!text) throw new Error("לא התקבלה תשובה מ-Gemini");
+    return text;
+  }
+
+
   // ---------------- ticker tape ----------------
   const TICKER_INDICES = [
     { symbol: "SPY", label: "S&P 500" },
@@ -1237,24 +1407,24 @@
   ];
 
   async function fetchTickerQuotes(symbols, apiKey) {
-    // Uses the same time_series endpoint the rest of the app already relies on successfully
-    // (avoids the separate /quote endpoint, which may not behave the same on the free tier).
+    // Reuses the shared cached fetchDailyBars() - if another feature already pulled this
+    // symbol's daily bars today, the ticker gets it for free instead of a separate API call.
     const results = [];
     for (const sym of symbols) {
       try {
-        const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=1day&outputsize=2&apikey=${apiKey}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.status === "error" || !data.values || data.values.length < 1) continue;
-        const values = data.values; // most recent first
-        const last = parseFloat(values[0].close);
-        const prev = values.length > 1 ? parseFloat(values[1].close) : last;
+        const bars = await fetchDailyBars(sym, apiKey);
+        if (!bars || bars.length < 1) continue;
+        const last = bars[bars.length - 1].close;
+        const prev = bars.length > 1 ? bars[bars.length - 2].close : last;
         const changePct = prev ? ((last - prev) / prev) * 100 : 0;
         results.push({ symbol: sym, price: last, changePct });
       } catch (e) {
         console.error(`Ticker fetch failed for ${sym}:`, e);
       }
-      if (symbols.indexOf(sym) < symbols.length - 1) await sleep(900); // stay under free-tier rate limit
+      // small gap only matters when the cache was cold and a real network call happened;
+      // harmless when it was a cache hit (adds a negligible delay, protects against
+      // hitting the per-minute cap on a cold-cache day with many symbols)
+      if (symbols.indexOf(sym) < symbols.length - 1) await sleep(900);
     }
     return results;
   }
@@ -1339,6 +1509,19 @@
         localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
       }
     } catch (e) { console.error("storage failed", e); }
+  }
+  async function storeDelete(key) {
+    try {
+      if (supabaseClient && currentUser) {
+        await supabaseClient.from("app_data").delete().eq("user_id", currentUser.id).eq("key", key);
+        return;
+      }
+      if (hasClaudeStorage) {
+        await window.storage.delete(key, false);
+      } else {
+        localStorage.removeItem(STORAGE_PREFIX + key);
+      }
+    } catch (e) { console.error("storage delete failed", e); }
   }
   async function loadTrades() { return await storeGet("trades", []); }
   async function saveTrades() { await storeSet("trades", TRADES); }
@@ -1919,29 +2102,56 @@
     const fileInput = $("chart-image-input");
     const file = fileInput.files[0];
     if (!file) { alert("נא לבחור תמונה קודם"); return; }
-    const context = $("chart-context").value.trim();
+    const symbol = $("chart-context").value.trim().toUpperCase();
     const resultBox = $("chart-analysis-result");
     resultBox.innerHTML = `<div class="skeleton-card glass" style="margin-top:14px;"><div class="skeleton skeleton-line" style="width:50%;"></div><div class="skeleton skeleton-line" style="width:90%;"></div><div class="skeleton skeleton-line" style="width:75%;"></div></div>`;
 
     try {
       const base64 = await fileToBase64(file);
       const mediaType = file.type || "image/png";
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 700,
-          system: "אתה עוזר לניתוח תבניות טכניות בגרפים. תאר אך ורק את מה שנראה בתמונה: מגמה נראית לעין, רמות תמיכה/התנגדות ויזואליות, תבניות נרות אם ניתן לזהות, מומנטום אם יש אינדיקטורים גלויים. תן קריאה זהירה ומאוזנת של האפשרויות לטווח הקרוב (לא ודאות). אסור לך לתת המלצת קנייה/מכירה ישירה, ואסור לך להמציא נתונים שלא נראים בתמונה. ענה בעברית, מאורגן וקצר.",
-          messages: [{ role: "user", content: [
-            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-            { type: "text", text: context ? `הקשר: ${context}\n\nתאר את התבניות הטכניות בגרף הזה והאפשרויות לטווח הקרוב.` : "תאר את התבניות הטכניות בגרף הזה והאפשרויות לטווח הקרוב." }
-          ]}]
-        })
-      });
-      const data = await response.json();
-      const text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n") || "לא הצלחתי לנתח את התמונה.";
+
+      // If a symbol was given, fetch real data and COMPUTE real Volume Profile + Fibonacci
+      // (never guessed from pixels) to hand the model as verified facts alongside the image.
+      let realDataBlock = "לא סופק סימול - אין נתונים אמיתיים מחושבים; ההתייחסות ל-Volume Profile ופיבונאצ'י (אם יבקשו) תסתמך רק על מה שמצויר בתמונה עצמה, אם בכלל.";
+      const apiKey = await getApiKey();
+      if (symbol && apiKey) {
+        try {
+          const bars = await fetchDailyBars(symbol, apiKey);
+          const vp = volumeProfileAnalysis(bars.slice(-90));
+          const fib = fibonacciLevels(bars, 60);
+          const lastClose = bars[bars.length-1].close;
+          realDataBlock = `נתונים אמיתיים שחושבו עבור ${symbol} (לא ניחוש - מבוסס 90 הימים האחרונים בפועל):
+- מחיר אחרון: $${fmt(lastClose)}
+- Volume Profile: POC (אזור הצפיפות הגבוה ביותר) = $${vp?fmt(vp.poc):'—'}, אזור ערך (Value Area) = $${vp?fmt(vp.valueAreaLow):'—'} עד $${vp?fmt(vp.valueAreaHigh):'—'}
+- רמות פיבונאצ'י (מבוסס שיא/שפל של 60 הימים האחרונים, שיא=$${fib?fmt(fib.high):'—'} שפל=$${fib?fmt(fib.low):'—'}): ${fib ? Object.entries(fib.levels).map(([r,v])=>`${r}=$${fmt(v)}`).join(', ') : '—'}
+תשתמש במספרים האלה כעובדות מוצקות - אל תמציא מספרים אחרים. תשלב אותם עם מה שאתה רואה בתמונה (מגמה, תבניות נרות, תנאי האסטרטגיה).`;
+        } catch (e) {
+          realDataBlock = `ניסיתי למשוך נתונים אמיתיים עבור ${symbol} אך נכשל (${e.message||e}) - ההתייחסות ל-Volume Profile ופיבונאצ'י תסתמך רק על מה שמצויר בתמונה עצמה, אם בכלל.`;
+        }
+      } else if (symbol && !apiKey) {
+        realDataBlock = "סופק סימול אך אין מפתח Twelve Data מחובר - לך ל'בדיקת מניה' לחבר מפתח חינמי כדי לקבל Volume Profile ופיבונאצ'י מחושבים באמת. בינתיים ההתייחסות אליהם תסתמך רק על מה שמצויר בתמונה עצמה.";
+      }
+
+      const systemPrompt = `אתה מנתח טכני מעמיק שבודק תרשים מניה מול אסטרטגיית "Gap & Trend Breakout" הבאה. יש לך שני מקורות מידע: (1) התמונה שהועלתה - לנתח חזותית (מגמה, תבניות נרות, מה שמצויר בפועל), (2) נתונים מחושבים אמיתיים שסופקו לך בטקסט (אם סופקו) - אלה עובדות מדויקות, לא ניחוש. לעולם אל תמציא נתונים או רמות שלא נמסרו לך באחד משני המקורות האלה.
+
+${realDataBlock}
+
+תנאי האסטרטגיה שיש לבדוק אחד-אחד ולתת לכל אחד ✓ (מתקיים) / ✗ (לא מתקיים) / ❓ (לא ניתן לזהות):
+1. מחיר מעל $10
+2. גאפ בפתיחה בטווח 2%-5%
+3. פריצת קו מגמה תוך-יומי מלווה בנפח גבוה מהרגיל
+4. מחיר מעל/מתחת EMA9, EMA20 ו-SMA50 (בהתאם לכיוון)
+5. RSI בטווח 50-70 (לונג) או 30-50 (שורט)
+6. היסטוגרמת MACD מאיצה בכיוון הפריצה
+7. **Volume Profile** - השתמש בנתונים המחושבים שסופקו למעלה אם יש; אחרת רק אם מצויר בתמונה
+8. **פיבונאצ'י** - השתמש בנתונים המחושבים שסופקו למעלה אם יש; אחרת רק אם מצויר בתמונה
+
+בסיום: הטיה כללית (לונג חזק/לונג חלש/ניטרלי/שורט חלש/שורט חזק) ורמת ביטחון איכותית (גבוהה/בינונית/נמוכה) - בלי אחוז מספרי מומצא. אסור המלצת קנייה/מכירה ישירה. ענה בעברית, מאורגן לפי הסעיפים, תמציתי.`;
+      const userPrompt = "נתח את הגרף הזה לפי כל הסעיפים, תוך שילוב הנתונים המחושבים שסופקו לך.";
+      const text = await callGemini(systemPrompt, [userPrompt, { mediaType, base64 }], 1200);
       resultBox.innerHTML = `
         <div class="rec-card glass" style="margin-top:14px;">
-          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 ניתוח דפוסים חזותי בלבד · לא המלצת פעולה · לא חיזוי ודאי</div>
+          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 ניתוח מול האסטרטגיה שלך${symbol && apiKey ? ' · Volume Profile ופיבונאצ׳י מחושבים מנתונים אמיתיים' : ''} · לא המלצת פעולה</div>
           <div style="font-size:13.5px;line-height:1.7;white-space:pre-wrap;">${text}</div>
         </div>`;
     } catch (e) {
@@ -2256,20 +2466,9 @@
     try {
       const base64 = await fileToBase64(file);
       const mediaType = file.type || "image/png";
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 1200,
-          system: "אתה מחלץ נתוני עסקאות מצילום מסך של ברוקר (היסטוריית מסחר/עסקאות סגורות). החזר אך ורק מערך JSON תקני, בלי טקסט נוסף, בלי markdown, בפורמט: [{\"symbol\":\"AAPL\",\"direction\":\"long\" or \"short\" or null אם לא ברור,\"shares\":100 or null,\"pnl\":123.45 (רווח/הפסד בדולרים, שלילי להפסד, null אם לא נראה מספר ברור),\"date\":\"YYYY-MM-DD\" or null אם לא מופיע בתמונה}]. אל תמציא שורות שלא רואים בבירור בתמונה. אם אין עסקאות ברורות, החזר מערך ריק [].",
-          messages: [{ role: "user", content: [
-            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-            { type: "text", text: "חלץ את כל שורות העסקאות מהתמונה הזו." }
-          ]}]
-        })
-      });
-      const data = await response.json();
-      let text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim();
-      text = text.replace(/^```json\s*/i, "").replace(/^```\s*/,"").replace(/```\s*$/,"").trim();
+      const systemPrompt = "אתה מחלץ נתוני עסקאות מצילום מסך של ברוקר (היסטוריית מסחר/עסקאות סגורות). החזר אך ורק מערך JSON תקני, בלי טקסט נוסף, בלי markdown, בפורמט: [{\"symbol\":\"AAPL\",\"direction\":\"long\" or \"short\" or null אם לא ברור,\"shares\":100 or null,\"pnl\":123.45 (רווח/הפסד בדולרים, שלילי להפסד, null אם לא נראה מספר ברור),\"date\":\"YYYY-MM-DD\" or null אם לא מופיע בתמונה}]. אל תמציא שורות שלא רואים בבירור בתמונה. אם אין עסקאות ברורות, החזר מערך ריק [].";
+      let text = await callGemini(systemPrompt, ["חלץ את כל שורות העסקאות מהתמונה הזו.", { mediaType, base64 }], 1200);
+      text = text.trim().replace(/^```json\s*/i, "").replace(/^```\s*/,"").replace(/```\s*$/,"").trim();
       let extracted;
       try { extracted = JSON.parse(text); } catch (e) { throw new Error("לא הצלחתי לפענח את התוצאה כרשימת עסקאות תקינה"); }
       if (!Array.isArray(extracted) || extracted.length === 0) {
@@ -2588,19 +2787,11 @@
     };
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 500,
-          system: "אתה מאמן מסחר. יש לך שני סוגי תשובות, ואתה בוחר לפי סוג השאלה: (1) שאלות על הביצועים/העסקאות/ההמלצות האישיות של המשתמש - עונה אך ורק על סמך נתוני המסחר שסופקו לך ב-JSON, אסור להמציא מספרים או לנחש נתונים אישיים שאין לך. (2) שאלות כלליות על מסחר, ניתוח טכני, אסטרטגיות, מושגים (למשל 'מה זה RSI', 'איך עובד ORB', 'מה ההבדל בין תמיכה להתנגדות') - כאן כן מותר ואף רצוי לענות מתוך הידע הכללי שלך על השוק, בלי קשר לנתונים האישיים. בשני המקרים: לעולם אל תמציא מחירים עדכניים, תחזיות שוק ספציפיות, או המלצת קנייה/מכירה קונקרטית - זה תמיד מידע/חינוך, לא ייעוץ השקעות. ענה בעברית, בקצרה, ישירות לעניין.",
-          messages: [{ role: "user", content: `נתוני המסחר שלי:\n${JSON.stringify(summary)}\n\nשאלה: ${question}` }]
-        })
-      });
-      const data = await response.json();
-      const text = (data.content || []).filter(b=>b.type==="text").map(b=>b.text).join("\n") || "לא הצלחתי לענות על זה מהנתונים הקיימים.";
+      const systemPrompt = "אתה מאמן מסחר. יש לך שני סוגי תשובות, ואתה בוחר לפי סוג השאלה: (1) שאלות על הביצועים/העסקאות/ההמלצות האישיות של המשתמש - עונה אך ורק על סמך נתוני המסחר שסופקו לך ב-JSON, אסור להמציא מספרים או לנחש נתונים אישיים שאין לך. (2) שאלות כלליות על מסחר, ניתוח טכני, אסטרטגיות, מושגים (למשל 'מה זה RSI', 'איך עובד ORB', 'מה ההבדל בין תמיכה להתנגדות') - כאן כן מותר ואף רצוי לענות מתוך הידע הכללי שלך על השוק, בלי קשר לנתונים האישיים. בשני המקרים: לעולם אל תמציא מחירים עדכניים, תחזיות שוק ספציפיות, או המלצת קנייה/מכירה קונקרטית - זה תמיד מידע/חינוך, לא ייעוץ השקעות. ענה בעברית, בקצרה, ישירות לעניין.";
+      const text = await callGemini(systemPrompt, [`נתוני המסחר שלי:\n${JSON.stringify(summary)}\n\nשאלה: ${question}`], 500);
       thinking.textContent = text;
     } catch (e) {
-      thinking.textContent = "שגיאה בחיבור - נסה שוב.";
+      thinking.textContent = "שגיאה: " + (e.message || "נסה שוב.");
     }
     $("qa-messages").scrollTop = $("qa-messages").scrollHeight;
   }
@@ -2753,22 +2944,46 @@
     try {
       const base64 = await fileToBase64(file);
       const mediaType = file.type || "image/png";
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6", max_tokens: 800,
-          system: "אתה מנתח תבניות טכניות בגרף זהב (XAUUSD). תאר אך ורק את מה שרואים בתמונה: מגמה, רמות תמיכה/התנגדות ויזואליות, תבניות נרות, מומנטום אם יש אינדיקטורים גלויים (RSI/MACD/VWAP וכו' אם מופיעים). תן הטיה (long/short/ניטרלי) ורמת ביטחון איכותית בזיהוי התבנית - גבוהה/בינונית/נמוכה - **לעולם לא אחוז מספרי מדויק**, כי אין לך נתונים היסטוריים אמיתיים לחשב ממנו סטטיסטיקה, רק את התמונה הבודדת הזו. אסור לך להמציא מחירים או רמות שלא נראות בבירור. ענה בעברית, מאורגן בכמה שורות קצרות: מגמה, רמות מפתח, הטיה, רמת ביטחון.",
-          messages: [{ role: "user", content: [
-            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-            { type: "text", text: "נתח את גרף הזהב הזה - מגמה, רמות מפתח, הטיה סבירה, ורמת ביטחון." }
-          ]}]
-        })
-      });
-      const data = await response.json();
-      const text = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n") || "לא הצלחתי לנתח את התמונה.";
+
+      // Always fetch and COMPUTE real XAUUSD Volume Profile + Fibonacci (never guessed from pixels)
+      let realDataBlock = "לא הצלחתי למשוך נתוני זהב אמיתיים - ההתייחסות ל-Volume Profile ופיבונאצ'י תסתמך רק על מה שמצויר בתמונה עצמה, אם בכלל.";
+      const apiKey = await getApiKey();
+      if (apiKey) {
+        try {
+          const bars = await fetchDailyBars("XAU/USD", apiKey);
+          const vp = volumeProfileAnalysis(bars.slice(-90));
+          const fib = fibonacciLevels(bars, 60);
+          const lastClose = bars[bars.length-1].close;
+          realDataBlock = `נתונים אמיתיים שחושבו עבור זהב (XAUUSD) - לא ניחוש, מבוסס 90 הימים היומיים האחרונים בפועל:
+- מחיר אחרון: $${fmt(lastClose)}
+- Volume Profile: POC = $${vp?fmt(vp.poc):'—'}, אזור ערך = $${vp?fmt(vp.valueAreaLow):'—'} עד $${vp?fmt(vp.valueAreaHigh):'—'}
+- רמות פיבונאצ'י (שיא/שפל 60 ימים: שיא=$${fib?fmt(fib.high):'—'} שפל=$${fib?fmt(fib.low):'—'}): ${fib ? Object.entries(fib.levels).map(([r,v])=>`${r}=$${fmt(v)}`).join(', ') : '—'}
+שים לב: אלה נתוני יומי (daily), לא תוך-יומי - שימושי כהקשר לרמות מפתח רחבות, לא בהכרח מדויק לחלון ה-ORB התוך-יומי. תשתמש במספרים האלה כעובדות מוצקות, אל תמציא אחרים. שלב אותם עם מה שאתה רואה בתמונה.`;
+        } catch (e) {
+          realDataBlock = `ניסיתי למשוך נתוני זהב אמיתיים אך נכשל (${e.message||e}) - ההתייחסות ל-Volume Profile ופיבונאצ'י תסתמך רק על מה שמצויר בתמונה עצמה, אם בכלל.`;
+        }
+      } else {
+        realDataBlock = "אין מפתח Twelve Data מחובר - לך ל'בדיקת מניה' לחבר מפתח חינמי כדי לקבל Volume Profile ופיבונאצ'י מחושבים באמת. בינתיים ההתייחסות אליהם תסתמך רק על מה שמצויר בתמונה עצמה.";
+      }
+
+      const systemPrompt = `אתה מנתח טכני מעמיק שבודק תרשים זהב (XAUUSD) מול אסטרטגיית "Smart Opening Range Breakout" הבאה. יש לך שני מקורות מידע: (1) התמונה שהועלתה - נתח חזותית, (2) נתונים מחושבים אמיתיים שסופקו בטקסט למטה (אם סופקו) - אלה עובדות מדויקות. לעולם אל תמציא נתונים שלא נמסרו לך באחד משני המקורות.
+
+${realDataBlock}
+
+תנאי האסטרטגיה שיש לבדוק אחד-אחד ולתת לכל אחד ✓ (מתקיים) / ✗ (לא מתקיים) / ❓ (לא ניתן לזהות):
+1. פריצה של טווח הפתיחה (16:30-16:45 שעון ישראל) מלווה בנפח גבוה
+2. מחיר מעל/מתחת VWAP היומי
+3. יחס EMA9 מול EMA21
+4. מגמת שעה (H1)
+5. גוף נר הפריצה - לפחות 60% מהטווח שלו
+6. **Volume Profile** - השתמש בנתונים המחושבים שסופקו למעלה אם יש; אחרת רק אם מצויר בתמונה
+7. **פיבונאצ'י** - השתמש בנתונים המחושבים שסופקו למעלה אם יש; אחרת רק אם מצויר בתמונה
+
+בסיום: הטיה (long/short/ניטרלי) ורמת ביטחון איכותית (גבוהה/בינונית/נמוכה) - **לעולם לא אחוז מספרי מדויק**, כי אין נתונים היסטוריים אמיתיים לחשב מהם סטטיסטיקה על התבנית הזו במיוחד. ענה בעברית, מאורגן לפי הסעיפים, תמציתי.`;
+      const text = await callGemini(systemPrompt, ["נתח את גרף הזהב הזה לפי כל הסעיפים, תוך שילוב הנתונים המחושבים שסופקו.", { mediaType, base64 }], 1200);
       resultBox.innerHTML = `
         <div class="rec-card glass" style="margin-top:14px;border-color:rgba(199,211,208,.25);">
-          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 ניתוח דפוסים חזותי · לא אחוז הצלחה היסטורי · לא המלצת פעולה</div>
+          <div style="font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔎 ניתוח מול אסטרטגיית ה-ORB${apiKey ? ' · Volume Profile ופיבונאצ׳י מחושבים מנתונים אמיתיים' : ''} · לא אחוז הצלחה היסטורי · לא המלצת פעולה</div>
           <div style="font-size:13.5px;line-height:1.7;white-space:pre-wrap;">${text}</div>
         </div>`;
     } catch (e) {
@@ -2785,6 +3000,65 @@
   async function loadWatchlist() { return await storeGet("longterm:watchlist", []); }
   async function saveWatchlist(w) { await storeSet("longterm:watchlist", w); }
   async function loadSavedAnalysis(symbol) { return await storeGet("longterm:analysis:"+symbol, null); }
+
+  // ---- screenshot-based holdings/watchlist import ----
+  $("btn-import-holdings-image").addEventListener("click", async () => {
+    const file = $("lt-import-image").files[0];
+    if (!file) { alert("נא לבחור תמונה קודם"); return; }
+    const fallbackDate = $("lt-import-date").value || todayStr();
+    const resultBox = $("lt-import-result");
+    resultBox.innerHTML = `<div class="skeleton-card glass" style="margin-top:14px;"><div class="skeleton skeleton-line" style="width:50%;"></div><div class="skeleton skeleton-line" style="width:85%;"></div><div class="skeleton skeleton-line" style="width:70%;"></div></div>`;
+
+    try {
+      const base64 = await fileToBase64(file);
+      const mediaType = file.type || "image/png";
+      const systemPrompt = "אתה מחלץ נתוני תיק השקעות מצילום מסך (מבט תיק/אחזקות בברוקר או אפליקציית מסחר). החזר אך ורק מערך JSON תקני, בלי טקסט נוסף, בלי markdown, בפורמט: [{\"symbol\":\"AAPL\",\"shares\":10.5 or null אם לא ברור,\"costBasis\":150.25 (מחיר קנייה ממוצע למניה בדולרים) or null אם לא נראה בבירור}]. אל תמציא שורות שלא רואים בבירור בתמונה. אם אין אחזקות ברורות, החזר מערך ריק [].";
+      let text = await callGemini(systemPrompt, ["חלץ את כל האחזקות מהתמונה הזו.", { mediaType, base64 }], 1200);
+      text = text.trim().replace(/^```json\s*/i, "").replace(/^```\s*/,"").replace(/```\s*$/,"").trim();
+      let extracted;
+      try { extracted = JSON.parse(text); } catch (e) { throw new Error("לא הצלחתי לפענח את התוצאה כרשימת אחזקות תקינה"); }
+      if (!Array.isArray(extracted) || extracted.length === 0) {
+        resultBox.innerHTML = `<div class="empty-state" style="margin-top:14px;"><div class="big">🤔</div>לא זיהיתי אחזקות ברורות בתמונה הזו.</div>`;
+        return;
+      }
+
+      HOLDINGS = await loadHoldings();
+      const watchlist = await loadWatchlist();
+      const addedHoldings = [], addedWatch = [];
+
+      for (const row of extracted) {
+        if (!row.symbol) continue;
+        const symbol = String(row.symbol).toUpperCase().trim();
+        const shares = (row.shares !== null && row.shares !== undefined) ? parseFloat(row.shares) : null;
+        const costBasis = (row.costBasis !== null && row.costBasis !== undefined) ? parseFloat(row.costBasis) : null;
+
+        if (shares && costBasis) {
+          const holding = { id: Date.now()+Math.random(), symbol, shares, costBasis, buyDate: fallbackDate, notes: "יובא מצילום מסך", status: "open", exitPrice: null, exitDate: null };
+          HOLDINGS.unshift(holding);
+          addedHoldings.push(holding);
+        }
+        if (!watchlist.find(w => w.symbol === symbol)) {
+          watchlist.push({ symbol, addedDate: todayStr() });
+          addedWatch.push(symbol);
+        }
+      }
+      await saveHoldings(HOLDINGS);
+      await saveWatchlist(watchlist);
+
+      const holdingsRowsHtml = addedHoldings.map(h => `<div class="trade-mini"><span>${h.symbol}</span><span class="mono">${h.shares} מניות @ $${fmt(h.costBasis)}</span></div>`).join("");
+      resultBox.innerHTML = `
+        <div class="rec-card glass" style="margin-top:14px;">
+          <div class="rec-top"><span class="sym">יובא: ${addedHoldings.length} אחזקות · ${addedWatch.length} נוספו למעקב</span></div>
+          ${holdingsRowsHtml ? `<div style="margin-top:10px;">${holdingsRowsHtml}</div>` : `<div class="hint" style="margin-top:8px;">לא זוהו כמות+מחיר ברורים לאף שורה, אז רק נוספו לרשימת המעקב.</div>`}
+        </div>`;
+      showToast(`${addedHoldings.length} אחזקות ו-${addedWatch.length} סימולים למעקב נוספו`, "success");
+      await renderHoldings();
+      await renderWatchlist();
+    } catch (e) {
+      resultBox.innerHTML = `<div class="consistency-note" style="display:block;margin-top:14px;">שגיאה בייבוא: ${e.message||e}</div>`;
+    }
+  });
+
   async function saveAnalysis(symbol, data) { await storeSet("longterm:analysis:"+symbol, data); }
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
