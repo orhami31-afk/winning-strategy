@@ -663,11 +663,12 @@
         <div><label>נפח יחסי RVOL</label><input type="number" id="in-rvol" step="0.1" placeholder="2.4"></div>
         <div><label>RSI (14)</label><input type="number" id="in-rsi" step="1" placeholder="58"></div>
       </div>
-      <div class="toggle-row"><span>פריצת קו מגמה מאושרת בנפח</span><label class="switch"><input type="checkbox" id="in-breakout"><span class="slider"></span></label></div>
-      <div class="toggle-row"><span>מעל/מתחת EMA9, EMA20, SMA50</span><label class="switch"><input type="checkbox" id="in-ma"><span class="slider"></span></label></div>
-      <div class="toggle-row"><span>MACD היסטוגרמה מאיצה</span><label class="switch"><input type="checkbox" id="in-macd"><span class="slider"></span></label></div>
-      <div class="toggle-row"><span>פריצה קרובה ל-POC</span><label class="switch"><input type="checkbox" id="in-poc"><span class="slider"></span></label></div>
-      <div class="toggle-row"><span>SPY/QQQ בריאים (מעל SMA20)</span><label class="switch"><input type="checkbox" id="in-sentiment"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>נסיגה רגועה ל-EMA20/POC (נפח נמוך)</span><label class="switch"><input type="checkbox" id="in-breakout"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>חציית VWAP באישור נפח</span><label class="switch"><input type="checkbox" id="in-ma"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>MACD היסטוגרמה מתהפכת מירידה לעלייה</span><label class="switch"><input type="checkbox" id="in-macd"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>מגמה יומית חיובית</span><label class="switch"><input type="checkbox" id="in-poc"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>SPY/QQQ בריאים (מעל SMA20) - שער חובה</span><label class="switch"><input type="checkbox" id="in-sentiment"><span class="slider"></span></label></div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:6px;">4 התנאים הראשונים הם ניקוד איכות (צריך 4 מתוך 5) - הסנטימנט הוא שער חובה נפרד.</div>
       <label>מחיר כניסה מתוכנן ($)</label><input type="number" id="in-entry" step="0.01" placeholder="42.15">
       <label>סטופ טכני מהגרף ($)</label><input type="number" id="in-stop" step="0.01" placeholder="41.40">
       <button class="btn" id="btn-check">בדוק תנאים וחשב פוזיציה</button>
@@ -711,12 +712,13 @@
     </div>
 
     <details class="rules glass">
-      <summary>תזכורת חוקים — Gap &amp; Trend Breakout</summary>
+      <summary>תזכורת חוקים — Pullback Continuation</summary>
       <div class="rules-grid">
-        <div><strong>יקום:</strong> מחיר מעל $10 · נפח יומי ממוצע מעל 1M · RVOL פי 2+ · גאפ 2%–5%.</div>
-        <div><strong>כניסה:</strong> פריצת קו מגמה + נפח, EMA9/EMA20/SMA50, קרבה ל-POC, RSI 50-70 (לונג)/30-50 (שורט), MACD מאיץ.</div>
-        <div><strong>סנטימנט:</strong> ללונג — SPY ו-QQQ מעל SMA20.</div>
+        <div><strong>יקום:</strong> מחיר מעל $15 · נפח יומי ממוצע מעל 2M · RVOL פי 1.8+ · גאפ 1.5%–6%.</div>
+        <div><strong>שערי חובה:</strong> יקום + סנטימנט (SPY ו-QQQ מעל SMA20, ללונג).</div>
+        <div><strong>ניקוד איכות (4 מתוך 5 נדרשים):</strong> נסיגה ל-EMA20/POC · חציית VWAP+נפח · RSI 40-50 מתאושש (לונג)/50-60 יורד (שורט) · MACD מתהפך · מגמה יומית חיובית.</div>
         <div><strong>סיכון:</strong> יחס 1:2 · סיכון $500 · יעד $1,000 · breakeven ב-1:1 · אחזקה 1–10 ימים.</div>
+        <div><strong>אחוז הצלחה:</strong> תמיד מבוסס בקטסט אמיתי לכל מניה בנפרד - אף פעם לא מספר קבוע מראש.</div>
       </div>
     </details>
   </section>
@@ -1099,7 +1101,14 @@
   const fmt = (n) => (n === null || n === undefined || isNaN(n)) ? "—" : Number(n).toFixed(2);
   const todayStr = () => new Date().toISOString().slice(0, 10);
 
-  const RULES = { minPrice: 10, rvolMin: 2, gapMin: 2, gapMax: 5, rsiLongMin: 50, rsiLongMax: 70, rsiShortMin: 30, rsiShortMax: 50, riskUsd: 500, rr: 2 };
+  // ---- Strategy v2: "Pullback Continuation" - mandatory gates + quality score (replaces the old
+  // all-10-conditions-required model, which was too strict to ever find candidates). ----
+  const RULES = {
+    minPrice: 15, rvolMin: 1.8, gapMin: 1.5, gapMax: 6,
+    riskUsd: 500, rr: 2, // R:R target - spec allows 1.5-2, using 2 as the concrete default
+    minQualityScore: 4, qualityPoolSize: 5, // need at least 4 of 5 quality signals
+  };
+
 
   // ---------- toast notifications ----------
   function showToast(message, type) {
@@ -1283,13 +1292,31 @@
     showToast("המטמון נוקה - הבדיקה הבאה תמשוך נתונים טריים מה-API", "success");
   });
 
+  /** Rolling N-day VWAP proxy (true intraday VWAP needs intraday data we don't have on daily bars -
+   *  this approximates "price relative to volume-weighted average" using a trailing window). */
+  function rollingVwap(bars, window=20) {
+    const out = new Array(bars.length).fill(null);
+    for (let i = 0; i < bars.length; i++) {
+      const start = Math.max(0, i - window + 1);
+      let sumPV = 0, sumV = 0;
+      for (let j = start; j <= i; j++) {
+        const tp = (bars[j].high + bars[j].low + bars[j].close) / 3;
+        sumPV += tp * bars[j].volume; sumV += bars[j].volume;
+      }
+      out[i] = sumV ? sumPV / sumV : bars[i].close;
+    }
+    return out;
+  }
+
   function backtestSymbol(bars, direction, maxHoldDays=10, rr=2) {
     if (bars.length < 80) return { winRate: null, sample: 0, byMonth: {} };
-    const closes = bars.map(b=>b.close);
-    const emaFast = ema(closes, 9), emaMed = ema(closes, 20), smaSlow = sma(closes, 50);
+    const closes = bars.map(b=>b.close), volumes = bars.map(b=>b.volume);
+    const emaMed = ema(closes, 20), smaSlow = sma(closes, 50);
     const rsiArr = rsi(closes, 14), hist = macdHist(closes);
+    const vwapArr = rollingVwap(bars, 20);
+    const pocSeries = bars.map((_, i) => i >= 30 ? pocLevel(bars.slice(Math.max(0,i-30), i+1)) : null);
     let outcomes = [];
-    const byMonth = {}; // "01".."12" -> {wins, total}
+    const byMonth = {};
     const start = 55, end = bars.length - 1;
     for (let i = start; i < end; i++) {
       const gapPct = (bars[i].open - closes[i-1]) / closes[i-1] * 100;
@@ -1297,11 +1324,20 @@
       if (gapDir !== direction) continue;
       if (Math.abs(gapPct) < RULES.gapMin || Math.abs(gapPct) > RULES.gapMax) continue;
       const price = closes[i];
-      let maOk, rsiOk;
-      if (direction === "long") { maOk = price>emaFast[i] && price>emaMed[i] && smaSlow[i]!==null && price>smaSlow[i]; rsiOk = rsiArr[i]>=RULES.rsiLongMin && rsiArr[i]<=RULES.rsiLongMax; }
-      else { maOk = price<emaFast[i] && price<emaMed[i] && smaSlow[i]!==null && price<smaSlow[i]; rsiOk = rsiArr[i]>=RULES.rsiShortMin && rsiArr[i]<=RULES.rsiShortMax; }
-      if (!maOk || !rsiOk) continue;
-      if (i<3 || !(hist[i]>hist[i-1] && hist[i-1]>hist[i-2])) continue;
+      const avgVol20 = volumes.slice(Math.max(0,i-20), i).reduce((a,b)=>a+b,0) / Math.min(20,i);
+      if (!avgVol20 || volumes[i] < avgVol20 * RULES.rvolMin) continue; // universe gate: RVOL
+
+      // mandatory gate: universe price/volume already implied by data quality; gap gate applied above
+      // quality score (need minQualityScore of qualityPoolSize)
+      const poc = pocSeries[i];
+      const pullbackOk = (emaMed[i] && Math.abs(price-emaMed[i])/emaMed[i] <= 0.02) || (poc && Math.abs(price-poc)/poc <= 0.02);
+      const vwapOk = direction==="long" ? price > vwapArr[i] && volumes[i] > avgVol20 : price < vwapArr[i] && volumes[i] > avgVol20;
+      const rsiOk = direction==="long" ? (rsiArr[i]>=40 && rsiArr[i]<=50 && rsiArr[i]>rsiArr[i-1]) : (rsiArr[i]>=50 && rsiArr[i]<=60 && rsiArr[i]<rsiArr[i-1]);
+      const macdFlipOk = i>=2 ? (direction==="long" ? (hist[i]>hist[i-1] && hist[i-1]<=hist[i-2]) : (hist[i]<hist[i-1] && hist[i-1]>=hist[i-2])) : false;
+      const trendOk = smaSlow[i]!==null && smaSlow[i-5]!==null ? (direction==="long" ? (price>smaSlow[i] && smaSlow[i]>smaSlow[i-5]) : (price<smaSlow[i] && smaSlow[i]<smaSlow[i-5])) : false;
+      const qualityScore = [pullbackOk, vwapOk, rsiOk, macdFlipOk, trendOk].filter(Boolean).length;
+      if (qualityScore < RULES.minQualityScore) continue;
+
       const entry = price;
       const recentLow = Math.min(...bars.slice(Math.max(0,i-10), i+1).map(b=>b.low));
       const recentHigh = Math.max(...bars.slice(Math.max(0,i-10), i+1).map(b=>b.high));
@@ -1884,21 +1920,35 @@
     const direction = $("in-direction").value;
     const price = parseFloat($("in-price").value), gap = parseFloat($("in-gap").value);
     const rvol = parseFloat($("in-rvol").value), rsi = parseFloat($("in-rsi").value);
-    const breakout = $("in-breakout").checked, maFilter = $("in-ma").checked, macdOk = $("in-macd").checked;
-    const pocOk = $("in-poc").checked, sentimentOk = $("in-sentiment").checked;
+    const pullbackOk = $("in-breakout").checked; // "נסיגה רגועה ל-EMA20/POC"
+    const vwapOk = $("in-ma").checked;           // "חצה מעל VWAP באישור נפח"
+    const macdOk = $("in-macd").checked;         // "MACD מתהפך מירידה לעלייה"
+    const trendOk = $("in-poc").checked;         // "מגמה יומית חיובית"
+    const sentimentOk = $("in-sentiment").checked;
     const entry = parseFloat($("in-entry").value), stop = parseFloat($("in-stop").value);
-    const checks = [];
-    checks.push({label:`מחיר מעל $${RULES.minPrice}`, ok: price > RULES.minPrice});
-    checks.push({label:`RVOL ≥ ${RULES.rvolMin}`, ok: rvol >= RULES.rvolMin});
-    checks.push({label:`גאפ בטווח ${RULES.gapMin}%–${RULES.gapMax}%`, ok: Math.abs(gap) >= RULES.gapMin && Math.abs(gap) <= RULES.gapMax});
-    checks.push({label:"פריצת קו מגמה + נפח", ok: breakout});
-    checks.push({label:"פילטר EMA9/EMA20/SMA50", ok: maFilter});
-    const rsiOk = direction === "long" ? (rsi >= RULES.rsiLongMin && rsi <= RULES.rsiLongMax) : (rsi >= RULES.rsiShortMin && rsi <= RULES.rsiShortMax);
-    checks.push({label:"RSI בטווח הבריא", ok: rsiOk});
-    checks.push({label:"MACD היסטוגרמה מאיצה", ok: macdOk});
-    checks.push({label:"פריצה קרובה ל-POC", ok: pocOk});
-    if (direction === "long") checks.push({label:"SPY/QQQ מעל SMA20", ok: sentimentOk});
-    const passed = checks.every(c => c.ok);
+
+    // mandatory gates
+    const gates = [];
+    gates.push({label:`מחיר מעל $${RULES.minPrice}`, ok: price > RULES.minPrice});
+    gates.push({label:`RVOL ≥ ${RULES.rvolMin}`, ok: rvol >= RULES.rvolMin});
+    gates.push({label:`גאפ בטווח ${RULES.gapMin}%–${RULES.gapMax}%`, ok: Math.abs(gap) >= RULES.gapMin && Math.abs(gap) <= RULES.gapMax});
+    if (direction === "long") gates.push({label:"SPY/QQQ מעל SMA20 (סנטימנט)", ok: sentimentOk});
+    const gatesPassed = gates.every(c => c.ok);
+
+    // quality score (need minQualityScore out of qualityPoolSize)
+    const rsiOk = direction === "long" ? (rsi >= 40 && rsi <= 50) : (rsi >= 50 && rsi <= 60);
+    const quality = [
+      {label:"נסיגה רגועה ל-EMA20/POC", ok: pullbackOk},
+      {label:"חציית VWAP באישור נפח", ok: vwapOk},
+      {label:`RSI ${direction==='long'?'40-50 מתאושש':'50-60 יורד'}`, ok: rsiOk},
+      {label:"MACD היסטוגרמה מתהפכת", ok: macdOk},
+      {label:"מגמה יומית חיובית", ok: trendOk},
+    ];
+    const qualityScore = quality.filter(c => c.ok).length;
+    const qualityPassed = qualityScore >= RULES.minQualityScore;
+
+    const checks = [...gates, ...quality.map(c => ({...c, isQuality:true}))];
+    const passed = gatesPassed && qualityPassed;
     let plan = null;
     if (!isNaN(entry) && !isNaN(stop) && entry !== stop) {
       const riskPerShare = direction === "long" ? (entry-stop) : (stop-entry);
@@ -1909,7 +1959,7 @@
         plan = { shares, riskUsd: +(shares*riskPerShare).toFixed(2), rewardUsd: +(shares*rewardPerShare).toFixed(2), target: +target.toFixed(2) };
       }
     }
-    return { symbol, direction, entry, stop, checks, passed, plan };
+    return { symbol, direction, entry, stop, checks, passed, plan, qualityScore, qualityPoolSize: RULES.qualityPoolSize };
   }
 
   $("btn-check").addEventListener("click", () => {
@@ -1931,7 +1981,7 @@
       <div class="rec-top">
         <div style="display:flex;align-items:center;gap:8px;"><span class="sym">${sig.symbol}</span><span class="dir-badge ${sig.direction}">${sig.direction==='long'?'LONG':'SHORT'}</span></div>
       </div>
-      <div class="verdict ${sig.passed?'pass':'fail'}">${sig.passed?'✓ עומד בכל התנאים':'✗ לא עומד בכל התנאים'}</div>
+      <div class="verdict ${sig.passed?'pass':'fail'}">${sig.passed?`✓ עומד בשערי החובה + ${sig.qualityScore}/${sig.qualityPoolSize} תנאי איכות`:`✗ לא עומד (איכות: ${sig.qualityScore}/${sig.qualityPoolSize}, צריך ${RULES.minQualityScore}+)`}</div>
       <ul class="checklist">${checklistHtml}</ul>${planHtml}
       <div class="signal-actions" style="margin-top:12px;"></div>`;
     if (sig.passed && sig.plan) {
@@ -1969,41 +2019,63 @@
       const spyBars = await fetchDailyBars("SPY", apiKey);
       if (bars.length < 60) throw new Error("אין מספיק היסטוריה עבור המניה הזו");
 
-      const closes = bars.map(b=>b.close);
+      const closes = bars.map(b=>b.close), volumes = bars.map(b=>b.volume);
       const last = bars[bars.length-1], prev = bars[bars.length-2];
       const gapPct = (last.open - prev.close) / prev.close * 100;
       let direction = $("auto-direction").value;
       if (direction === "auto") direction = gapPct >= 0 ? "long" : "short";
 
-      const avgVol30 = bars.slice(-30).reduce((a,b)=>a+b.volume,0)/Math.min(30,bars.length);
-      const rvol = avgVol30 ? last.volume/avgVol30 : 0;
-      const emaFast = ema(closes,9), emaMed = ema(closes,20), smaSlowArr = sma(closes,50);
+      const avgVol20 = bars.slice(-21,-1).reduce((a,b)=>a+b.volume,0)/20;
+      const rvol = avgVol20 ? last.volume/avgVol20 : 0;
+      const emaMed = ema(closes,20), smaSlowArr = sma(closes,50);
       const rsiArr = rsi(closes,14), hist = macdHist(closes);
+      const vwapArr = rollingVwap(bars, 20);
       const price = closes[closes.length-1];
-      const macdAccelerating = hist.length>3 && hist[hist.length-1]>hist[hist.length-2] && hist[hist.length-2]>hist[hist.length-3];
+      const n = closes.length - 1;
       const poc = pocLevel(bars.slice(-30));
-      const nearPoc = Math.abs(price-poc)/poc*100 <= 2;
 
       const spyCloses = spyBars.map(b=>b.close);
       const spySma20 = sma(spyCloses,20);
       const spyHealthy = spySma20[spySma20.length-1] !== null && spyCloses[spyCloses.length-1] > spySma20[spySma20.length-1];
+      let qqqHealthy = true;
+      try {
+        const qqqBars = await fetchDailyBars("QQQ", apiKey);
+        const qqqCloses = qqqBars.map(b=>b.close);
+        const qqqSma20 = sma(qqqCloses,20);
+        qqqHealthy = qqqSma20[qqqSma20.length-1] !== null && qqqCloses[qqqCloses.length-1] > qqqSma20[qqqSma20.length-1];
+      } catch (e) { qqqHealthy = null; }
 
-      const checks = [];
-      checks.push({label:`מחיר מעל $${RULES.minPrice}`, ok: price > RULES.minPrice});
-      checks.push({label:`RVOL ≥ ${RULES.rvolMin}`, ok: rvol >= RULES.rvolMin});
-      checks.push({label:`גאפ בטווח ${RULES.gapMin}%–${RULES.gapMax}%`, ok: Math.abs(gapPct) >= RULES.gapMin && Math.abs(gapPct) <= RULES.gapMax});
-      checks.push({label:"⚠️ פריצת קו מגמה תוך-יומית (לא ניתן לאמת מנתוני יומי - אשר ידנית בגרף)", ok: true, unverified: true});
-      const maOk = direction==="long" ? (price>emaFast[emaFast.length-1] && price>emaMed[emaMed.length-1] && smaSlowArr[smaSlowArr.length-1]!==null && price>smaSlowArr[smaSlowArr.length-1])
-                                      : (price<emaFast[emaFast.length-1] && price<emaMed[emaMed.length-1] && smaSlowArr[smaSlowArr.length-1]!==null && price<smaSlowArr[smaSlowArr.length-1]);
-      checks.push({label:"פילטר EMA9/EMA20/SMA50", ok: maOk});
-      const rsiVal = rsiArr[rsiArr.length-1];
-      const rsiOk = direction==="long" ? (rsiVal>=RULES.rsiLongMin && rsiVal<=RULES.rsiLongMax) : (rsiVal>=RULES.rsiShortMin && rsiVal<=RULES.rsiShortMax);
-      checks.push({label:`RSI בטווח הבריא (${rsiVal.toFixed(0)})`, ok: rsiOk});
-      checks.push({label:"MACD היסטוגרמה מאיצה", ok: macdAccelerating});
-      checks.push({label:"פריצה קרובה ל-POC", ok: nearPoc});
-      if (direction === "long") checks.push({label:"SPY מעל SMA20", ok: spyHealthy});
+      // mandatory gates
+      const gates = [];
+      gates.push({label:`מחיר מעל $${RULES.minPrice}`, ok: price > RULES.minPrice});
+      gates.push({label:`RVOL ≥ ${RULES.rvolMin}`, ok: rvol >= RULES.rvolMin});
+      gates.push({label:`גאפ בטווח ${RULES.gapMin}%–${RULES.gapMax}%`, ok: Math.abs(gapPct) >= RULES.gapMin && Math.abs(gapPct) <= RULES.gapMax});
+      if (direction === "long") {
+        gates.push({label:"SPY מעל SMA20 (סנטימנט)", ok: spyHealthy});
+        gates.push({label:"QQQ מעל SMA20 (סנטימנט)", ok: qqqHealthy===null?true:qqqHealthy, unverified: qqqHealthy===null});
+      }
+      const gatesPassed = gates.filter(c=>!c.unverified).every(c=>c.ok);
 
-      const autoPassed = checks.filter(c=>!c.unverified).every(c=>c.ok);
+      // quality score (need minQualityScore of qualityPoolSize)
+      const pullbackOk = (emaMed[n] && Math.abs(price-emaMed[n])/emaMed[n] <= 0.02) || (poc && Math.abs(price-poc)/poc <= 0.02);
+      const vwapOk = direction==="long" ? (price > vwapArr[n] && volumes[n] > avgVol20) : (price < vwapArr[n] && volumes[n] > avgVol20);
+      const rsiVal = rsiArr[n];
+      const rsiOk = direction==="long" ? (rsiVal>=40 && rsiVal<=50 && rsiVal>rsiArr[n-1]) : (rsiVal>=50 && rsiVal<=60 && rsiVal<rsiArr[n-1]);
+      const macdFlipOk = direction==="long" ? (hist[n]>hist[n-1] && hist[n-1]<=hist[n-2]) : (hist[n]<hist[n-1] && hist[n-1]>=hist[n-2]);
+      const trendOk = smaSlowArr[n]!==null && smaSlowArr[n-5]!==null ? (direction==="long" ? (price>smaSlowArr[n] && smaSlowArr[n]>smaSlowArr[n-5]) : (price<smaSlowArr[n] && smaSlowArr[n]<smaSlowArr[n-5])) : false;
+
+      const quality = [
+        {label:"נסיגה רגועה ל-EMA20/POC", ok: pullbackOk},
+        {label:"חציית VWAP באישור נפח (קירוב מנתוני יומי)", ok: vwapOk},
+        {label:`RSI ${direction==='long'?'40-50 מתאושש':'50-60 יורד'} (${rsiVal.toFixed(0)})`, ok: rsiOk},
+        {label:"MACD היסטוגרמה מתהפכת", ok: macdFlipOk},
+        {label:"מגמה יומית חיובית (מעל SMA50 עולה)", ok: trendOk},
+      ];
+      const qualityScore = quality.filter(c=>c.ok).length;
+      const qualityPassed = qualityScore >= RULES.minQualityScore;
+
+      const checks = [...gates, ...quality];
+      const autoPassed = gatesPassed && qualityPassed;
       const bt = backtestSymbol(bars, direction);
 
       // Earnings date check (graceful - free tier may not include this endpoint)
@@ -2048,7 +2120,11 @@
 
       const recentLow = Math.min(...bars.slice(-10).map(b=>b.low));
       const recentHigh = Math.max(...bars.slice(-10).map(b=>b.high));
-      const stop = direction==="long" ? recentLow : recentHigh;
+      // stop per new spec: below the recent swing low / EMA20-POC pullback area (whichever is tighter but still below price)
+      const structuralStop = direction==="long"
+        ? Math.min(recentLow, emaMed[n]?emaMed[n]*0.99:recentLow, poc?poc*0.99:recentLow)
+        : Math.max(recentHigh, emaMed[n]?emaMed[n]*1.01:recentHigh, poc?poc*1.01:recentHigh);
+      const stop = structuralStop;
       const riskPS = direction==="long" ? (price-stop) : (stop-price);
       let planHtml = "";
       if (riskPS > 0) {
@@ -2071,7 +2147,7 @@
           <div class="rec-top">
             <div style="display:flex;align-items:center;gap:8px;"><span class="sym">${symbol}</span><span class="dir-badge ${direction}">${direction==='long'?'LONG':'SHORT'}</span></div>
           </div>
-          <div class="verdict ${autoPassed?'pass':'fail'}" style="margin-top:6px;">${autoPassed?'✓ המניה עומדת בכל התנאים שניתן לאמת אוטומטית':'✗ המניה לא עומדת בכל תנאי האסטרטגיה - לא מומלץ להיכנס לפי הכללים שהגדרת'}</div>
+          <div class="verdict ${autoPassed?'pass':'fail'}" style="margin-top:6px;">${autoPassed?`✓ עומדת בשערי החובה + ${qualityScore}/5 תנאי איכות`:`✗ לא עומדת (איכות: ${qualityScore}/5, נדרש ${RULES.minQualityScore}+) - לא מומלץ להיכנס לפי הכללים שהגדרת`}</div>
           <div style="margin-top:8px;">${successHtml}</div>
           <div style="font-size:11px;color:var(--text-faint);margin-top:4px;">↑ זהו שיעור ההצלחה ההיסטורי <b>של הסטאפ הספציפי הזה בלבד</b> (${direction==='long'?'לונג':'שורט'} על ${symbol}) - לא תחזית, ולא ערובה לתוצאה עתידית.</div>
           <ul class="checklist" style="margin-top:12px;">${checklistHtml}</ul>
