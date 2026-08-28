@@ -146,6 +146,22 @@
   }
   .chip-toggle.active { background: var(--accent); color: #070B09; border-color: var(--accent); }
 
+  .live-param-row-v2 { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .live-param-row-v2:last-of-type { border-bottom: none; }
+  .lprow-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .live-range {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 4px;
+    background: var(--border-strong); outline: none; direction: rtl; /* min value hugs the right edge, matching reading direction */
+  }
+  .live-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); cursor: pointer; box-shadow: 0 0 8px var(--accent-dim);
+  }
+  .live-range::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none;
+    box-shadow: 0 0 8px var(--accent-dim);
+  }
+
 
   /* ---------- risk budget progress bar ---------- */
   .risk-budget-track { width: 100%; height: 9px; border-radius: 5px; background: var(--border); overflow: hidden; }
@@ -204,8 +220,8 @@
   .app-main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
   .sidebar {
-    position: fixed; inset-block: 0; inset-inline-end: 0; width: 240px; z-index: 90;
-    background: var(--surface-solid); border-inline-start: 1px solid var(--border);
+    position: fixed; inset-block: 0; right: 0; width: 240px; z-index: 90;
+    background: var(--surface-solid); border-left: 1px solid var(--border);
     display: flex; flex-direction: column; padding: 18px 12px; overflow-y: auto;
     transform: translateX(100%); transition: transform .28s cubic-bezier(.16,.84,.44,1);
   }
@@ -231,7 +247,7 @@
 
   #sidebar-toggle-btn { display: inline-flex; }
   @media (min-width: 980px) {
-    .app-main-col { margin-inline-end: 240px; }
+    .app-main-col { margin-right: 240px; }
     .sidebar { transform: translateX(0); box-shadow: none; }
     .sidebar-backdrop { display: none; }
     #sidebar-toggle-btn { display: none; }
@@ -368,6 +384,9 @@
 
   /* ---------- signal / rec cards ---------- */
   .rec-card { padding: 16px; margin-bottom: 12px; border-right: 3px solid var(--border); position: relative; transition: transform .2s ease, box-shadow .2s ease; }
+  .rec-checklist-details { margin-top: 10px; }
+  .rec-checklist-details summary { font-size: 11.5px; color: var(--text-faint); cursor: pointer; }
+  .rec-checklist-details summary:hover { color: var(--text-muted); }
   .rec-card:hover { transform: perspective(900px) rotateX(0.6deg) translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,.3); }
   @media (hover: none) { .rec-card:hover { transform: none; } }
   .rec-card.long { border-right-color: var(--long); }
@@ -877,35 +896,32 @@
     <div class="card glass">
       <h2>🎛️ סורק חי - התאם דרישות בעצמך</h2>
       <p class="hint">
-        בודק את המצב הנוכחי (עכשיו, לא היסטוריה) של כל מניה ברשימה מול הפרמטרים שתבחר.
-        לכל פרמטר: <b>חץ ימינה/שמאלה</b> לשינוי הסף, ומתג "חובה" אם הוא צריך להתקיים כדי שהמניה תעבור.
-        מניה מוצגת רק אם כל התנאים המסומנים "חובה" מתקיימים בה כרגע.
+        בודק את המצב הנוכחי (עכשיו, לא היסטוריה) של כל מניה ברשימה מול הפרמטרים שתבחר, עם מד טווח
+        לכל פרמטר ומתג "חובה". <b>הרשימה למטה כבר מלאה מראש</b> ביקום מניות נזילות ומוכרות ממגזרים
+        שונים - אפשר לסרוק ישר, או לערוך/להוסיף סימולים משלך. סריקה אמיתית של "כל השוק" (אלפי מניות)
+        לא אפשרית בשכבה החינמית של ה-API בגלל מגבלת הקצב - זה יקום מייצג, לא הכל.
       </p>
-      <label>סימולים לבדיקה (מופרדים בפסיק)</label>
-      <textarea id="live-scan-symbols" rows="2" placeholder="AAPL, MSFT, NVDA, TSLA, AMD, ..."></textarea>
+      <label>סימולים לבדיקה (מופרדים בפסיק) - כבר ממולא, ערוך כרצונך</label>
+      <textarea id="live-scan-symbols" rows="3">AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA, AMD, AVGO, NFLX, JPM, BAC, GS, V, MA, UNH, JNJ, PFE, XOM, CVX, COP, CAT, BA, HON, WMT, HD, MCD, KO, PEP, DIS, VZ, T, NEE, DUK, LIN, FCX, PLD, AMT, CSCO, ORCL, CRM, ADBE, QCOM</textarea>
 
-      <div class="live-param-row">
-        <div class="live-param-label">נפח יחסי (RVOL) ≥</div>
-        <div class="live-param-control">
-          <button class="stepper-btn" id="rvol-dec">‹</button>
-          <span class="stepper-val" id="rvol-val">1.8</span>
-          <button class="stepper-btn" id="rvol-inc">›</button>
+      <div class="live-param-row-v2">
+        <div class="lprow-header">
+          <span class="live-param-label">נפח יחסי (RVOL) ≥ <b id="rvol-val">1.8</b>x</span>
+          <label class="switch"><input type="checkbox" id="rvol-required" checked><span class="slider"></span></label>
         </div>
-        <label class="switch"><input type="checkbox" id="rvol-required" checked><span class="slider"></span></label>
+        <input type="range" id="rvol-slider" class="live-range" min="0.5" max="5" step="0.1" value="1.8">
       </div>
 
-      <div class="live-param-row">
-        <div class="live-param-label">RSI בין</div>
-        <div class="live-param-control">
-          <button class="stepper-btn" id="rsimin-dec">‹</button>
-          <span class="stepper-val" id="rsimin-val">40</span>
-          <button class="stepper-btn" id="rsimin-inc">›</button>
-          <span style="color:var(--text-faint);">–</span>
-          <button class="stepper-btn" id="rsimax-dec">‹</button>
-          <span class="stepper-val" id="rsimax-val">70</span>
-          <button class="stepper-btn" id="rsimax-inc">›</button>
+      <div class="live-param-row-v2">
+        <div class="lprow-header">
+          <span class="live-param-label">RSI מינימום ≥ <b id="rsimin-val">40</b></span>
+          <label class="switch"><input type="checkbox" id="rsi-required" checked><span class="slider"></span></label>
         </div>
-        <label class="switch"><input type="checkbox" id="rsi-required" checked><span class="slider"></span></label>
+        <input type="range" id="rsimin-slider" class="live-range" min="0" max="95" step="5" value="40">
+        <div class="lprow-header" style="margin-top:8px;">
+          <span class="live-param-label">RSI מקסימום ≤ <b id="rsimax-val">70</b></span>
+        </div>
+        <input type="range" id="rsimax-slider" class="live-range" min="5" max="100" step="5" value="70">
       </div>
 
       <div class="live-param-row">
@@ -923,14 +939,12 @@
         <label class="switch"><input type="checkbox" id="dir-required" checked><span class="slider"></span></label>
       </div>
 
-      <div class="live-param-row">
-        <div class="live-param-label">חוזק המגמה (ADX) ≥ <span style="color:var(--text-faint);font-size:11px;">- לא רק כיוון, האם יש בכלל מגמה אמיתית</span></div>
-        <div class="live-param-control">
-          <button class="stepper-btn" id="adx-dec">‹</button>
-          <span class="stepper-val" id="adx-val">20</span>
-          <button class="stepper-btn" id="adx-inc">›</button>
+      <div class="live-param-row-v2">
+        <div class="lprow-header">
+          <span class="live-param-label">חוזק המגמה (ADX) ≥ <b id="adx-val">20</b> <span style="color:var(--text-faint);font-size:11px;">- לא רק כיוון, האם יש בכלל מגמה אמיתית</span></span>
+          <label class="switch"><input type="checkbox" id="adx-required" checked><span class="slider"></span></label>
         </div>
-        <label class="switch"><input type="checkbox" id="adx-required" checked><span class="slider"></span></label>
+        <input type="range" id="adx-slider" class="live-range" min="10" max="50" step="5" value="20">
       </div>
 
       <div class="live-param-row">
@@ -1072,7 +1086,7 @@
 
     <div class="card glass gold-card">
       <h2 style="color:var(--gold);">🥇 בדיקה ידנית - Smart Opening Range Breakout</h2>
-      <p class="hint">בדיקת מצב "עכשיו" מול תנאי הכניסה (כולל Liquidity Sweep). פעיל רק בחלון 16:30–17:30 שעון ישראל. זו בדיקה לפי דרישה בלבד - לא ניטור רציף ולא ביצוע אוטומטי.</p>
+      <p class="hint">בדיקת מצב "עכשיו" מול פריצת טווח הפתיחה (חובה) + 4 מתוך 6 תנאי איכות (כולל Liquidity Sweep), עם סטופ מבוסס-ATR. פעיל רק בחלון 16:30–17:30 שעון ישראל. זו בדיקה לפי דרישה בלבד - לא ניטור רציף ולא ביצוע אוטומטי.</p>
       <div id="gold-window-status" class="mono" style="font-size:12.5px;color:var(--text-faint);margin-bottom:10px;"></div>
       <button class="btn gold-btn" id="btn-gold-check">בדוק הזדמנות עכשיו</button>
       <div id="gold-result"></div>
@@ -2846,15 +2860,17 @@ ${realDataBlock}
   // ---- live interactive parameter screener ----
   const liveScanState = { rvol: 1.8, rsiMin: 40, rsiMax: 70, direction: "long", adx: 20 };
 
-  function wireStepper(decId, incId, valId, key, min, max, step, decimals) {
-    const update = () => { $(valId).textContent = decimals ? liveScanState[key].toFixed(decimals) : liveScanState[key]; };
-    $(decId).addEventListener("click", () => { liveScanState[key] = Math.max(min, +(liveScanState[key]-step).toFixed(2)); update(); });
-    $(incId).addEventListener("click", () => { liveScanState[key] = Math.min(max, +(liveScanState[key]+step).toFixed(2)); update(); });
+  function wireSlider(sliderId, valId, key, decimals) {
+    $(sliderId).addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value);
+      liveScanState[key] = val;
+      $(valId).textContent = decimals ? val.toFixed(decimals) : val;
+    });
   }
-  wireStepper("rvol-dec", "rvol-inc", "rvol-val", "rvol", 0.5, 5, 0.1, 1);
-  wireStepper("rsimin-dec", "rsimin-inc", "rsimin-val", "rsiMin", 0, 95, 5, 0);
-  wireStepper("rsimax-dec", "rsimax-inc", "rsimax-val", "rsiMax", 5, 100, 5, 0);
-  wireStepper("adx-dec", "adx-inc", "adx-val", "adx", 10, 50, 5, 0);
+  wireSlider("rvol-slider", "rvol-val", "rvol", 1);
+  wireSlider("rsimin-slider", "rsimin-val", "rsiMin", 0);
+  wireSlider("rsimax-slider", "rsimax-val", "rsiMax", 0);
+  wireSlider("adx-slider", "adx-val", "adx", 0);
 
   $("dir-btn-long").addEventListener("click", () => {
     liveScanState.direction = "long";
@@ -3034,6 +3050,13 @@ ${realDataBlock}
         <div class="cell"><div class="l">אחזקה</div><div class="v">${rec.suggested_hold_days ?? '—'} ימים</div></div>
         <div class="cell"><div class="l">סיכון/רווח</div><div class="v">$${fmt(rec.risk_usd)}/$${fmt(rec.reward_usd)}</div></div>
       </div>
+      ${Array.isArray(rec.checklist) && rec.checklist.length ? `
+        <details class="rec-checklist-details">
+          <summary>📋 על סמך מה החליטה המערכת (${rec.quality_score ?? '—'}/${rec.quality_pool_size ?? rec.checklist.length})</summary>
+          <ul class="checklist" style="margin-top:10px;">
+            ${rec.checklist.map(c => `<li><span class="${c.ok?'ok':'no'}">${c.ok?'✓':'✗'}</span> ${c.label}</li>`).join("")}
+          </ul>
+        </details>` : ""}
       <div class="entry-status-box"></div>
       <div class="consistency-note" style="display:none;"></div>
     `;
@@ -3599,9 +3622,25 @@ ${realDataBlock}
   const GOLD_CFG = {
     windowStart: {h:16, m:30}, orEnd: {h:16, m:45}, windowEnd: {h:17, m:30},
     volMult: 2.0, volLookback: 20, emaFast: 9, emaSlow: 21, maxSpread: 0.60, minBodyRatio: 0.60,
-    maxLossUsd: 75, rr: 2, atrPeriod: 14, minStopAtrMult: 0.5, contractSize: 100,
+    maxLossUsd: 75, rr: 2, atrPeriod: 14, atrStopMult: 1.5, contractSize: 100,
     sweepToleranceUsd: 0.10, sweepLookbackMinutes: 15,
+    minQualityScore: 4, qualityPoolSize: 6, // mandatory gate = OR breakout; 6 quality checks, need 4
   };
+
+  /** Standard ATR (Average True Range), Wilder-style EMA smoothing. */
+  function atrM1(bars, period=14) {
+    const n = bars.length;
+    const tr = new Array(n).fill(0);
+    for (let i=1;i<n;i++) {
+      tr[i] = Math.max(bars[i].high-bars[i].low, Math.abs(bars[i].high-bars[i-1].close), Math.abs(bars[i].low-bars[i-1].close));
+    }
+    const out = new Array(n).fill(null);
+    let sum = 0;
+    for (let i=1;i<=period && i<n;i++) sum += tr[i];
+    if (period < n) out[period] = sum/period;
+    for (let i=period+1;i<n;i++) out[i] = out[i-1]!==null ? (out[i-1]*(period-1)+tr[i])/period : null;
+    return out;
+  }
 
   /** Liquidity sweep check: a wick pierces the opposite side of the opening range
    *  (stop-hunt) then closes back inside, within the lookback window before the breakout bar. */
@@ -3622,14 +3661,6 @@ ${realDataBlock}
   }
   function minutesOfDay(h,m){ return h*60+m; }
 
-  function atrArr(bars, period=14) {
-    const tr = bars.map((b,i) => {
-      if (i===0) return b.high-b.low;
-      const prevClose = bars[i-1].close;
-      return Math.max(b.high-b.low, Math.abs(b.high-prevClose), Math.abs(b.low-prevClose));
-    });
-    return ema(tr, period);
-  }
   function sessionVwap(bars) {
     let cumPV=0, cumV=0; const out=[];
     bars.forEach(b => { const tp=(b.high+b.low+b.close)/3; cumPV+=tp*b.volume; cumV+=b.volume; out.push(cumV?cumPV/cumV:tp); });
@@ -3687,6 +3718,7 @@ ${realDataBlock}
       }
       direction = brokeUp ? "long" : "short";
       const avgVol = m1.slice(-GOLD_CFG.volLookback-1,-1).reduce((a,b)=>a+b.volume,0)/GOLD_CFG.volLookback;
+      // mandatory gate: the OR breakout itself (already established above) - everything else is now scored quality
       checks.push({label:`נפח פריצה ≥ ${GOLD_CFG.volMult}x ממוצע`, ok: avgVol>0 && last.volume>=avgVol*GOLD_CFG.volMult});
       checks.push({label:`גוף נר ≥ ${GOLD_CFG.minBodyRatio*100}%`, ok: bodyRatio(last)>=GOLD_CFG.minBodyRatio});
       const vwapArr = sessionVwap(m1.filter(b=>b.time.startsWith(today)));
@@ -3701,12 +3733,12 @@ ${realDataBlock}
       checks.push({label:"Liquidity Sweep לפני הפריצה", ok: sweepFound});
       checks.push({label:`ספרד ≤ $${GOLD_CFG.maxSpread}`, ok:true, unverified:true});
 
-      const passed = checks.filter(c=>!c.unverified).every(c=>c.ok);
-      const atrVal = atrArr(m1, GOLD_CFG.atrPeriod)[m1.length-1];
-      const minStopDist = GOLD_CFG.minStopAtrMult * atrVal;
-      let stop = direction==="long" ? orLow : orHigh;
-      const orDist = Math.abs(last.close-stop);
-      if (orDist < minStopDist) stop = direction==="long" ? last.close-minStopDist : last.close+minStopDist;
+      const qualityScore = checks.filter(c=>!c.unverified).filter(c=>c.ok).length;
+      const passed = qualityScore >= GOLD_CFG.minQualityScore;
+      // ATR-based stop (replaces the old OR-boundary/structural stop - cleaner, adapts to actual
+      // volatility instead of being arbitrarily tight/wide depending on how big the OR happened to be)
+      const atrVal = atrM1(m1, GOLD_CFG.atrPeriod)[m1.length-1];
+      const stop = direction==="long" ? last.close - GOLD_CFG.atrStopMult*atrVal : last.close + GOLD_CFG.atrStopMult*atrVal;
       const riskPerUnit = Math.abs(last.close-stop);
       const target = direction==="long" ? last.close+riskPerUnit*GOLD_CFG.rr : last.close-riskPerUnit*GOLD_CFG.rr;
       const lotSize = riskPerUnit>0 ? Math.max(0.01, Math.round((GOLD_CFG.maxLossUsd/(riskPerUnit*GOLD_CFG.contractSize))*100)/100) : null;
@@ -3718,9 +3750,9 @@ ${realDataBlock}
           <div class="rec-top">
             <div style="display:flex;align-items:center;gap:8px;"><span class="sym">XAUUSD</span><span class="dir-badge ${direction}">${direction==='long'?'LONG':'SHORT'}</span></div>
           </div>
-          <div class="verdict ${passed?'pass':'fail'}" style="margin-top:6px;">${passed?'✓ עומד בתנאים שניתן לאמת - לא הוראת ביצוע':'✗ לא עומד בכל התנאים - לא מומלץ להיכנס לפי הכללים שהגדרת'}</div>
+          <div class="verdict ${passed?'pass':'fail'}" style="margin-top:6px;">${passed?`✓ עברה פריצת טווח פתיחה + ${qualityScore}/${GOLD_CFG.qualityPoolSize} תנאי איכות`:`✗ ${qualityScore}/${GOLD_CFG.qualityPoolSize} תנאי איכות - נדרש ${GOLD_CFG.minQualityScore}+ - לא מומלץ להיכנס`}</div>
           <ul class="checklist" style="margin-top:12px;">${checklistHtml}</ul>
-          <div style="font-size:10.5px;color:var(--text-faint);margin-top:8px;">המספרים למטה הם חישוב תיאורטי, לא הוראת ביצוע:</div>
+          <div style="font-size:10.5px;color:var(--text-faint);margin-top:8px;">סטופ מבוסס ATR (${GOLD_CFG.atrStopMult}x תנודתיות) - לא קצה טווח הפתיחה. המספרים למטה הם חישוב תיאורטי, לא הוראת ביצוע:</div>
           <div class="rec-grid">
             <div class="cell"><div class="l">מחיר</div><div class="v">$${fmt(last.close)}</div></div>
             <div class="cell"><div class="l">סטופ</div><div class="v short-t">$${fmt(stop)}</div></div>
